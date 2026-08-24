@@ -8,6 +8,7 @@ require_once dirname(__DIR__) . '/app/services/AuditService.php';
 require_once dirname(__DIR__) . '/app/models/UserRepository.php';
 require_once dirname(__DIR__) . '/app/controllers/ProfileController.php';
 require_once dirname(__DIR__) . '/app/models/DashboardRepository.php';
+require_once dirname(__DIR__) . '/app/models/AuditLogRepository.php';
 
 $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
@@ -121,6 +122,11 @@ if ($path === '/reservations') {
 
 if ($path === '/manage/reservations') {
     (new ReservationController(new ReservationService(new ReservationRepository(database($config)))))->librarian();
+    exit;
+}
+
+if ($path === '/admin/audit') {
+    (new AuditLogController(new AuditLogService(new AuditLogRepository(database($config)))))->index();
     exit;
 }
 
