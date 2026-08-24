@@ -72,5 +72,10 @@ if ($path === '/dashboard') {
     exit;
 }
 
+if ($path === '/manage/categories') {
+    (new CategoryController(new CategoryService(new CategoryRepository(database($config)))))->index();
+    exit;
+}
+
 http_response_code(404);
 echo 'Page not found.';
