@@ -13,11 +13,14 @@ Implemented foundation:
 - Book management and physical-copy status management
 - Borrowing, returns, due dates, and configurable overdue fines
 - Reservation queues, cancellation, expiration, and ready-state promotion
+- Profile updates with optional password changes
+- Role-aware member and staff dashboard statistics
+- Administrator audit-log viewing with pagination
 - CSRF protection, output escaping, security headers, and production error handling
 - PDO prepared statements and a normalized circulation schema
 - Native modular autoloading with no runtime dependencies
 
-Secure cover uploads, full dashboards, audit screens, and integration tests remain planned feature slices.
+Full workflow dashboards, broader audit coverage, and integration tests remain planned feature slices.
 
 ## Technology Stack
 
@@ -189,7 +192,6 @@ Before each commit, run diagnostics, PHP lint when available, the focused test, 
 
 ## Roadmap
 
-1. Secure cover upload service
-2. Member, librarian, and administrator dashboards
-3. Audit logging and reports
-4. Integration/security tests and final deployment review
+1. Complete workflow dashboards and reports
+2. Broader audit coverage
+3. Integration/security tests and final deployment review
