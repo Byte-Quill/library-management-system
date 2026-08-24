@@ -5,6 +5,8 @@ require dirname(__DIR__) . '/app/bootstrap.php';
 require_once dirname(__DIR__) . '/app/models/LoanRepository.php';
 require_once dirname(__DIR__) . '/app/models/AuditRepository.php';
 require_once dirname(__DIR__) . '/app/services/AuditService.php';
+require_once dirname(__DIR__) . '/app/models/UserRepository.php';
+require_once dirname(__DIR__) . '/app/controllers/ProfileController.php';
 require_once dirname(__DIR__) . '/app/models/DashboardRepository.php';
 
 $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
@@ -74,6 +76,11 @@ if ($path === '/') {
 
 if ($path === '/dashboard') {
     (new DashboardController(new DashboardService(new DashboardRepository(database($config)))))->index();
+    exit;
+}
+
+if ($path === '/profile') {
+    (new ProfileController(new ProfileService(new UserRepository(database($config)), new AuditService(new AuditRepository(database($config))))))->edit();
     exit;
 }
 
