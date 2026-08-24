@@ -61,35 +61,11 @@ if ($path === '/logout') {
     exit;
 }
 
-if ($path !== '/') {
-    http_response_code(404);
-    echo 'Page not found.';
+if ($path === '/') {
+    $controller = new CatalogController(new CatalogService(new BookRepository(database($config))));
+    $controller->index();
     exit;
 }
-?>
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Digital Library</title>
-    <link rel="stylesheet" href="/assets/app.css">
-</head>
-<body>
-<header class="site-header">
-    <a class="brand" href="/">Digital Library</a>
-    <nav aria-label="Main navigation"><a href="#catalog">Catalog</a><a href="/login">Log in</a></nav>
-</header>
-<main class="container">
-    <section class="intro">
-        <p class="eyebrow">Community collection</p>
-        <h1>Find your next read.</h1>
-        <p>Browse the library catalog, check availability, and keep every loan in one place.</p>
-    </section>
-    <section id="catalog" class="catalog" aria-labelledby="catalog-title">
-        <div class="section-heading"><h2 id="catalog-title">Catalog</h2><span class="muted">Coming next</span></div>
-        <div class="empty-state"><h3>The catalog is being prepared</h3><p>Books, search, and filters will appear here after the database is configured.</p></div>
-    </section>
-</main>
-</body>
-</html>
+
+http_response_code(404);
+echo 'Page not found.';
