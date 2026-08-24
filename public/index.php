@@ -98,5 +98,15 @@ if ($path === '/manage/returns') {
     exit;
 }
 
+if ($path === '/reservations') {
+    (new ReservationController(new ReservationService(new ReservationRepository(database($config)))))->member();
+    exit;
+}
+
+if ($path === '/manage/reservations') {
+    (new ReservationController(new ReservationService(new ReservationRepository(database($config)))))->librarian();
+    exit;
+}
+
 http_response_code(404);
 echo 'Page not found.';
