@@ -20,7 +20,9 @@
 <main class="container">
     <p class="eyebrow"><?= e($user['role']) ?> account</p>
     <h1>Welcome back, <?= e($user['name']) ?>.</h1>
-    <div class="empty-state"><h2>Your dashboard is ready for the next library features.</h2><p>Loans, reservations, and activity will appear here as they become available.</p></div>
+    <div class="book-grid">
+        <?php foreach ($stats as $label => $value): ?><article class="book-card"><p class="eyebrow"><?= e(str_replace('_', ' ', $label)) ?></p><h2><?= e((string) $value) ?></h2></article><?php endforeach; ?>
+    </div>
 </main>
 </body>
 </html>
