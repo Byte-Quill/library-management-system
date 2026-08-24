@@ -1,6 +1,41 @@
+# Local configuration and secrets
 .env
-storage/logs/*
-storage/uploads/*
-!storage/logs/.gitkeep
-!storage/uploads/.gitkeep
+.env.*
+!.env.example
+*.key
+*.pem
+*.crt
+
+# Dependencies and generated PHP tooling
+/vendor/
+/.phpunit.result.cache
+/coverage/
+/build/
+
+# Runtime data
+/storage/logs/*
+/storage/uploads/*
+/storage/cache/*
+!/storage/logs/.gitkeep
+!/storage/uploads/.gitkeep
+!/storage/cache/.gitkeep
+
+# Local database exports and temporary files
+*.sql.gz
+*.dump
+*.sqlite
+*.sqlite3
+*.tmp
+*.temp
+
+# IDE and operating-system files
 .DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# PHP and web-server local logs
+*.log
+error_log
