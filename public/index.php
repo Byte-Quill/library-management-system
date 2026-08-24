@@ -79,7 +79,7 @@ if ($path === '/manage/authors') {
 }
 
 if ($path === '/manage/books') {
-    (new BookManagementController(new BookManagementService(new BookManagementRepository(database($config))), new CategoryRepository(database($config)), new AuthorRepository(database($config))))->index();
+    (new BookManagementController(new BookManagementService(new BookManagementRepository(database($config)), new UploadService(dirname(__DIR__) . '/storage/uploads', $config['upload_max_bytes'])), new CategoryRepository(database($config)), new AuthorRepository(database($config))))->index();
     exit;
 }
 

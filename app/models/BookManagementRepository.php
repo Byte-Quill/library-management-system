@@ -16,7 +16,7 @@ final class BookManagementRepository
     {
         $this->db->beginTransaction();
         try {
-            $statement = $this->db->prepare('INSERT INTO books (category_id, title, isbn, publisher, publication_year, language, description, page_count) VALUES (:category_id, :title, :isbn, :publisher, :publication_year, :language, :description, :page_count)');
+            $statement = $this->db->prepare('INSERT INTO books (category_id, title, isbn, publisher, publication_year, language, description, page_count, cover_path) VALUES (:category_id, :title, :isbn, :publisher, :publication_year, :language, :description, :page_count, :cover_path)');
             $statement->execute($book);
             $bookId = (int) $this->db->lastInsertId();
             $authors = $this->db->prepare('INSERT INTO book_authors (book_id, author_id) VALUES (:book_id, :author_id)');
