@@ -82,5 +82,10 @@ if ($path === '/manage/books') {
     exit;
 }
 
+if ($path === '/manage/copies') {
+    (new CopyController(new CopyService(new CopyRepository(database($config))), new BookManagementRepository(database($config))))->index();
+    exit;
+}
+
 http_response_code(404);
 echo 'Page not found.';
