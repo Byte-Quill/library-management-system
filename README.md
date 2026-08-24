@@ -10,11 +10,14 @@ Implemented foundation:
 - Registration, login, logout, password hashing, and secure sessions
 - Role middleware for members, librarians, and administrators
 - Category and author management with archive behavior
+- Book management and physical-copy status management
+- Borrowing, returns, due dates, and configurable overdue fines
+- Reservation queues, cancellation, expiration, and ready-state promotion
 - CSRF protection, output escaping, security headers, and production error handling
 - PDO prepared statements and a normalized circulation schema
 - Native modular autoloading with no runtime dependencies
 
-Book CRUD, physical-copy workflows, loans, returns, reservations, dashboards, uploads, and audit screens remain planned feature slices.
+Secure cover uploads, full dashboards, audit screens, and integration tests remain planned feature slices.
 
 ## Technology Stack
 
@@ -186,10 +189,7 @@ Before each commit, run diagnostics, PHP lint when available, the focused test, 
 
 ## Roadmap
 
-1. Book CRUD and physical-copy management
-2. Secure cover upload service
-3. Transactional borrowing and returns
-4. Reservation queues and expiration
-5. Member, librarian, and administrator dashboards
-6. Audit logging and reports
-7. Integration/security tests and final deployment review
+1. Secure cover upload service
+2. Member, librarian, and administrator dashboards
+3. Audit logging and reports
+4. Integration/security tests and final deployment review
