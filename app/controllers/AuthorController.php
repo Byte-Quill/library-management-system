@@ -1,8 +1,6 @@
 <?php
 declare(strict_types=1);
 
-require_once dirname(__DIR__) . '/middleware/AuthorizationMiddleware.php';
-
 final class AuthorController
 {
     public function __construct(private AuthorService $authors)
