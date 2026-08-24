@@ -4,6 +4,7 @@ declare(strict_types=1);
 $config = require __DIR__ . '/config/config.php';
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/helpers/session.php';
+require_once __DIR__ . '/helpers/icons.php';
 require_once __DIR__ . '/autoload.php';
 
 start_secure_session($config);

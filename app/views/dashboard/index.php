@@ -13,7 +13,7 @@
         <span><?= e($user['name']) ?></span>
         <form method="post" action="/logout">
             <input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>">
-            <button type="submit">Log out</button>
+            <button type="submit"><?= icon('logout') ?><span>Log out</span></button>
         </form>
     </nav>
 </header>
