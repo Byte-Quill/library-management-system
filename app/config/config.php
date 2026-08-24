@@ -29,6 +29,7 @@ return [
     'url' => rtrim(env('APP_URL', ''), '/'),
     'session_timeout' => max(300, (int) env('SESSION_TIMEOUT', '1800')),
     'max_active_loans' => max(1, (int) env('MAX_ACTIVE_LOANS', '5')),
+    'loan_days' => max(1, (int) env('LOAN_DAYS', '14')),
     'fine' => [
         'daily_rate' => max(0, (float) env('FINE_DAILY_RATE', '1.00')),
         'grace_days' => max(0, (int) env('FINE_GRACE_DAYS', '0')),

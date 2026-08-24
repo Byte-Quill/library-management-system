@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require dirname(__DIR__) . '/app/bootstrap.php';
+require_once dirname(__DIR__) . '/app/models/LoanRepository.php';
 
 $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
@@ -84,6 +85,16 @@ if ($path === '/manage/books') {
 
 if ($path === '/manage/copies') {
     (new CopyController(new CopyService(new CopyRepository(database($config))), new BookManagementRepository(database($config))))->index();
+    exit;
+}
+
+if ($path === '/loans') {
+    (new LoanController(new LoanService(new LoanRepository(database($config)), $config)))->member();
+    exit;
+}
+
+if ($path === '/manage/returns') {
+    (new LoanController(new LoanService(new LoanRepository(database($config)), $config)))->librarian();
     exit;
 }
 
