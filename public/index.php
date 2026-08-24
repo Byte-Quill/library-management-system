@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 require dirname(__DIR__) . '/app/bootstrap.php';
 require_once dirname(__DIR__) . '/app/models/LoanRepository.php';
+require_once dirname(__DIR__) . '/app/models/AuditRepository.php';
+require_once dirname(__DIR__) . '/app/services/AuditService.php';
 
 $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
@@ -21,7 +23,8 @@ if (in_array($path, ['/login', '/register'], true)) {
             $error = 'Please provide valid details. Passwords must contain at least 8 characters.';
         } else {
             try {
-                $auth = new AuthService(database($config));
+                $db = database($config);
+                $auth = new AuthService($db, new AuditService(new AuditRepository($db)));
                 if ($mode === 'register') {
                     $auth->register($name, $email, $password);
                     header('Location: /login?registered=1', true, 303);
@@ -50,6 +53,11 @@ if (in_array($path, ['/login', '/register'], true)) {
 if ($path === '/logout') {
     if ($method === 'POST') {
         verify_csrf($_POST['csrf_token'] ?? null);
+        $user = AuthorizationMiddleware::currentUser();
+        if ($user !== null) {
+            $db = database($config);
+            (new AuditService(new AuditRepository($db)))->record((int) $user['id'], 'logout', 'user', (int) $user['id']);
+        }
         $_SESSION = [];
         session_destroy();
     }
