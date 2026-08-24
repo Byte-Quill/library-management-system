@@ -77,5 +77,10 @@ if ($path === '/manage/authors') {
     exit;
 }
 
+if ($path === '/manage/books') {
+    (new BookManagementController(new BookManagementService(new BookManagementRepository(database($config))), new CategoryRepository(database($config)), new AuthorRepository(database($config))))->index();
+    exit;
+}
+
 http_response_code(404);
 echo 'Page not found.';
