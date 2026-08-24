@@ -37,7 +37,7 @@ if (in_array($path, ['/login', '/register'], true)) {
                 } else {
                     session_regenerate_id(true);
                     $_SESSION['user'] = $user;
-                    header('Location: /', true, 303);
+                    header('Location: /dashboard', true, 303);
                     exit;
                 }
             } catch (Throwable $exception) {
@@ -64,6 +64,11 @@ if ($path === '/logout') {
 if ($path === '/') {
     $controller = new CatalogController(new CatalogService(new BookRepository(database($config))));
     $controller->index();
+    exit;
+}
+
+if ($path === '/dashboard') {
+    (new DashboardController())->index();
     exit;
 }
 

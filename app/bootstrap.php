@@ -4,9 +4,11 @@ declare(strict_types=1);
 $config = require __DIR__ . '/config/config.php';
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/helpers/session.php';
+require_once __DIR__ . '/middleware/AuthorizationMiddleware.php';
 require_once __DIR__ . '/models/BookRepository.php';
 require_once __DIR__ . '/services/CatalogService.php';
 require_once __DIR__ . '/controllers/CatalogController.php';
+require_once __DIR__ . '/controllers/DashboardController.php';
 require_once __DIR__ . '/services/AuthService.php';
 
 start_secure_session($config);
