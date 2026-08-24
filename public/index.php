@@ -77,5 +77,10 @@ if ($path === '/manage/categories') {
     exit;
 }
 
+if ($path === '/manage/authors') {
+    (new AuthorController(new AuthorService(new AuthorRepository(database($config)))))->index();
+    exit;
+}
+
 http_response_code(404);
 echo 'Page not found.';
