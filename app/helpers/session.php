@@ -21,6 +21,10 @@ function start_secure_session(array $config): void
         session_regenerate_id(true);
     }
     $_SESSION['last_activity'] = time();
+
+    if (!isset($_SESSION['created_at'])) {
+        $_SESSION['created_at'] = time();
+    }
 }
 
 function csrf_token(): string

@@ -3,11 +3,6 @@ declare(strict_types=1);
 
 require dirname(__DIR__) . '/app/bootstrap.php';
 
-header('X-Content-Type-Options: nosniff');
-header('X-Frame-Options: DENY');
-header('Referrer-Policy: strict-origin-when-cross-origin');
-header('Content-Security-Policy: default-src \'self\'; style-src \'self\';');
-
 $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
@@ -21,7 +16,7 @@ if (in_array($path, ['/login', '/register'], true)) {
         $email = trim((string) ($_POST['email'] ?? ''));
         $password = (string) ($_POST['password'] ?? '');
 
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL) || ($mode === 'register' && ($name === '' || strlen($name) > 120)) || strlen($password) < 8) {
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL) || ($mode === 'register' && ($name === '' || strlen($name) > 120)) || strlen($password) < 8 || strlen($password) > 4096) {
             $error = 'Please provide valid details. Passwords must contain at least 8 characters.';
         } else {
             try {

@@ -19,6 +19,14 @@ require_once __DIR__ . '/services/AuthService.php';
 
 start_secure_session($config);
 
+header('X-Content-Type-Options: nosniff');
+header('X-Frame-Options: DENY');
+header('Referrer-Policy: strict-origin-when-cross-origin');
+header("Content-Security-Policy: default-src 'self'; style-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'");
+if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+    header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+}
+
 if ($config['env'] === 'production') {
     ini_set('display_errors', '0');
     ini_set('log_errors', '1');
