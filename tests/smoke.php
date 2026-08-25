@@ -75,6 +75,8 @@ $views = [
     'loans/librarian.php',
     'loans/member.php',
     'members/index.php',
+    'partials/layout-top.php',
+    'partials/layout-bottom.php',
     'profile/edit.php',
     'reservations/librarian.php',
     'reservations/member.php',

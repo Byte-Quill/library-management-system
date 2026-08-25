@@ -6,32 +6,11 @@ $query = http_build_query(array_filter([
     'publication_year' => $catalog['filters']['publication_year'],
     'availability' => $catalog['filters']['availability'],
 ]));
+$pageTitle = 'Catalog';
+$headerNav = 'catalog';
+$mainClass = 'page-shell';
+require dirname(__DIR__) . '/partials/layout-top.php';
 ?>
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Catalog | Digital Library</title>
-    <link rel="stylesheet" href="/assets/app.css">
-</head>
-<body>
-<header class="site-header">
-    <a class="brand" href="/">
-        <span class="brand-mark">DL</span>
-        <span>Digital Library</span>
-    </a>
-    <nav aria-label="Main navigation">
-        <a href="/">Browse</a>
-        <?php if (AuthorizationMiddleware::currentUser() !== null): ?>
-            <a class="nav-button" href="/dashboard">My dashboard</a>
-        <?php else: ?>
-            <a href="/login">Log in</a>
-            <a class="nav-button" href="/register">Join now</a>
-        <?php endif; ?>
-    </nav>
-</header>
-<main class="container page-shell">
     <section class="hero">
         <div class="intro">
             <p class="eyebrow">Community collection</p>
@@ -111,6 +90,4 @@ $query = http_build_query(array_filter([
             <?php endif; ?>
         <?php endif; ?>
     </section>
-</main>
-</body>
-</html>
+<?php require dirname(__DIR__) . '/partials/layout-bottom.php'; ?>

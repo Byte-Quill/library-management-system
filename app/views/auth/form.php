@@ -1,20 +1,13 @@
 <?php
 $isLogin = $mode === 'login';
-$title = $isLogin ? 'Welcome back' : 'Join the library';
+$pageTitle = $isLogin ? 'Welcome back' : 'Join the library';
 $action = $isLogin ? '/login' : '/register';
+$headerNav = 'none';
+$mainClass = 'auth-page';
+require dirname(__DIR__) . '/partials/layout-top.php';
 ?>
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= e($title) ?> | Digital Library</title>
-    <link rel="stylesheet" href="/assets/app.css">
-</head>
-<body>
-<main class="container auth-page">
     <p class="eyebrow">Digital Library</p>
-    <h1><?= e($title) ?></h1>
+    <h1><?= e($pageTitle) ?></h1>
     <?php if (!empty($notice)): ?><p class="form-success" role="status"><?= e($notice) ?></p><?php endif; ?>
     <?php if ($error): ?><p class="form-error" role="alert"><?= e($error) ?></p><?php endif; ?>
     <form method="post" action="<?= e($action) ?>" class="auth-form">
@@ -31,6 +24,4 @@ $action = $isLogin ? '/login' : '/register';
     </form>
     <p><?= $isLogin ? 'New here? <a href="/register">Create an account</a>.' : 'Already a member? <a href="/login">Log in</a>.' ?></p>
     <p><a href="/">Back to catalog</a></p>
-</main>
-</body>
-</html>
+<?php require dirname(__DIR__) . '/partials/layout-bottom.php'; ?>
