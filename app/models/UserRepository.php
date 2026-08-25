@@ -22,4 +22,11 @@ final class UserRepository
             $statement->execute(['name' => $name, 'email' => $email, 'password_hash' => $passwordHash, 'id' => $id]);
         }
     }
+
+    public function allMembers(): array
+    {
+        $statement = $this->db->prepare("SELECT u.id, u.name, u.email, u.created_at FROM users u INNER JOIN roles r ON r.id = u.role_id WHERE r.name = 'member' AND u.status = 'active' ORDER BY u.created_at DESC");
+        $statement->execute();
+        return $statement->fetchAll() ?: [];
+    }
 }

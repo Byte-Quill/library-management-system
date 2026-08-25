@@ -106,6 +106,11 @@ if ($path === '/manage/authors') {
     exit;
 }
 
+if ($path === '/manage/members') {
+    (new MemberController(new MemberService(new UserRepository(database($config)), new AuthService(database($config), new AuditService(new AuditRepository(database($config)))))))->index();
+    exit;
+}
+
 if ($path === '/manage/books') {
     (new BookManagementController(new BookManagementService(new BookManagementRepository(database($config)), new UploadService(dirname(__DIR__) . '/storage/uploads', $config['upload_max_bytes'])), new CategoryRepository(database($config)), new AuthorRepository(database($config))))->index();
     exit;

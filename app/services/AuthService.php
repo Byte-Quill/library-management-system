@@ -9,20 +9,38 @@ final class AuthService
 
     public function register(string $name, string $email, string $password): bool
     {
+        $name = trim($name);
+        $email = strtolower(trim($email));
+
+        if ($name === '' || strlen($name) > 120 || !filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($password) < 8 || strlen($password) > 4096) {
+            throw new InvalidArgumentException('Please provide valid details. Passwords must contain at least 8 characters.');
+        }
+
         $role = $this->db->query("SELECT id FROM roles WHERE name = 'member'")->fetchColumn();
         if (!$role) {
             throw new RuntimeException('Member role is not configured.');
+        }
+
+        $existing = $this->db->prepare('SELECT id FROM users WHERE email = :email LIMIT 1');
+        $existing->execute(['email' => $email]);
+        if ($existing->fetchColumn() !== false) {
+            throw new InvalidArgumentException('An account with that email already exists.');
         }
 
         $statement = $this->db->prepare('INSERT INTO users (role_id, name, email, password_hash) VALUES (:role_id, :name, :email, :password_hash)');
         $created = $statement->execute([
             'role_id' => $role,
             'name' => $name,
-            'email' => strtolower($email),
+            'email' => $email,
             'password_hash' => password_hash($password, PASSWORD_DEFAULT),
         ]);
         if ($created) $this->audits?->record(null, 'user_registered', 'user', (int) $this->db->lastInsertId());
         return $created;
+    }
+
+    public function createMember(string $name, string $email, string $password): bool
+    {
+        return $this->register($name, $email, $password);
     }
 
     public function attempt(string $email, string $password): ?array
