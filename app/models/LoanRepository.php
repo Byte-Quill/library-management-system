@@ -37,13 +37,15 @@ final class LoanRepository
             $loan = $this->db->prepare('INSERT INTO loans (copy_id, member_id, issued_at, due_at) VALUES (:copy_id, :member_id, NOW(), :due_at)');
             $loan->execute(['copy_id' => $copyId, 'member_id' => $memberId, 'due_at' => $dueAt]);
             $this->db->prepare("UPDATE book_copies SET status = 'borrowed' WHERE id = :copy_id")->execute(['copy_id' => $copyId]);
+            // A ready reservation for this title is satisfied by this loan.
+            $this->db->prepare("UPDATE reservations SET status = 'fulfilled', fulfilled_at = NOW() WHERE book_id = :book_id AND member_id = :member_id AND status = 'ready'")->execute(['book_id' => $copyData['book_id'], 'member_id' => $memberId]);
             $this->db->commit();
         } catch (Throwable $exception) { $this->db->rollBack(); throw $exception; }
     }
 
-    public function overdueForReturn(): array
+    public function activeForReturn(): array
     {
-        return $this->db->query("SELECT l.id, l.due_at, l.member_id, b.title, u.name AS member_name, c.accession_number FROM loans l INNER JOIN users u ON u.id = l.member_id INNER JOIN book_copies c ON c.id = l.copy_id INNER JOIN books b ON b.id = c.book_id WHERE l.returned_at IS NULL ORDER BY l.due_at")->fetchAll();
+        return $this->db->query("SELECT l.id, l.due_at, l.member_id, b.title, u.name AS member_name, c.accession_number, (l.due_at < NOW()) AS is_overdue FROM loans l INNER JOIN users u ON u.id = l.member_id INNER JOIN book_copies c ON c.id = l.copy_id INNER JOIN books b ON b.id = c.book_id WHERE l.returned_at IS NULL ORDER BY l.due_at")->fetchAll();
     }
 
     public function returnLoan(int $loanId, array $fine): void

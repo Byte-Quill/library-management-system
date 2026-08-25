@@ -38,17 +38,65 @@ final class ReservationRepository
 
     public function cancel(int $reservationId, int $memberId): bool
     {
-        $statement = $this->db->prepare("UPDATE reservations SET status = 'cancelled' WHERE id = :id AND member_id = :member_id AND status IN ('pending', 'ready')");
-        $statement->execute(['id' => $reservationId, 'member_id' => $memberId]);
-        return $statement->rowCount() === 1;
+        $this->db->beginTransaction();
+        try {
+            $lookup = $this->db->prepare("SELECT book_id, status FROM reservations WHERE id = :id AND member_id = :member_id AND status IN ('pending', 'ready')");
+            $lookup->execute(['id' => $reservationId, 'member_id' => $memberId]);
+            $reservation = $lookup->fetch();
+            if (!$reservation) {
+                $this->db->rollBack();
+                return false;
+            }
+            $statement = $this->db->prepare("UPDATE reservations SET status = 'cancelled' WHERE id = :id AND member_id = :member_id AND status IN ('pending', 'ready')");
+            $statement->execute(['id' => $reservationId, 'member_id' => $memberId]);
+            if ($reservation['status'] === 'ready') {
+                $this->db->prepare("UPDATE book_copies SET status = 'available' WHERE book_id = :book_id AND status = 'reserved' ORDER BY id LIMIT 1")->execute(['book_id' => $reservation['book_id']]);
+            }
+            $this->db->commit();
+            return $statement->rowCount() === 1;
+        } catch (Throwable $exception) { $this->db->rollBack(); throw $exception; }
     }
 
     public function expireAndPromote(): void
     {
         $this->db->beginTransaction();
         try {
-            $this->db->exec("UPDATE reservations SET status = 'expired' WHERE status = 'ready' AND expires_at IS NOT NULL AND expires_at < NOW()");
-            $this->db->exec("UPDATE reservations r SET status = 'ready', expires_at = DATE_ADD(NOW(), INTERVAL 3 DAY) WHERE r.status = 'pending' AND EXISTS (SELECT 1 FROM book_copies c WHERE c.book_id = r.book_id AND c.status = 'available') AND r.created_at = (SELECT MIN(queue.created_at) FROM reservations queue WHERE queue.book_id = r.book_id AND queue.status = 'pending')");
+            // Expire ready reservations whose pickup window has passed and release the copies they hold.
+            $expired = $this->db->query("SELECT book_id, COUNT(*) AS total FROM reservations WHERE status = 'ready' AND expires_at IS NOT NULL AND expires_at < NOW() GROUP BY book_id")->fetchAll();
+            if ($expired !== []) {
+                $this->db->exec("UPDATE reservations SET status = 'expired' WHERE status = 'ready' AND expires_at IS NOT NULL AND expires_at < NOW()");
+                $release = $this->db->prepare("UPDATE book_copies SET status = 'available' WHERE book_id = :book_id AND status = 'reserved' ORDER BY id LIMIT 1");
+                foreach ($expired as $row) {
+                    for ($i = 0; $i < (int) $row['total']; $i++) {
+                        $release->execute(['book_id' => $row['book_id']]);
+                    }
+                }
+            }
+
+            // Promote the oldest pending reservations for each book that has available copies,
+            // holding one copy per promoted reservation. Done row-by-row to avoid updating
+            // reservations from a subquery on reservations itself (MySQL error 1093).
+            $candidates = $this->db->query("SELECT DISTINCT book_id FROM reservations WHERE status = 'pending'")->fetchAll(PDO::FETCH_COLUMN);
+            $promote = $this->db->prepare("UPDATE reservations SET status = 'ready', expires_at = DATE_ADD(NOW(), INTERVAL 3 DAY) WHERE id = :id AND status = 'pending'");
+            $hold = $this->db->prepare("UPDATE book_copies SET status = 'reserved' WHERE book_id = :book_id AND status = 'available' ORDER BY id LIMIT 1");
+            $next = $this->db->prepare("SELECT id FROM reservations WHERE book_id = :book_id AND status = 'pending' ORDER BY created_at ASC, id ASC LIMIT 1");
+            $available = $this->db->prepare("SELECT COUNT(*) FROM book_copies WHERE book_id = :book_id AND status = 'available'");
+            foreach ($candidates as $bookId) {
+                while (true) {
+                    $available->execute(['book_id' => $bookId]);
+                    if ((int) $available->fetchColumn() < 1) {
+                        break;
+                    }
+                    $next->execute(['book_id' => $bookId]);
+                    $reservationId = $next->fetchColumn();
+                    if ($reservationId === false) {
+                        break;
+                    }
+                    $promote->execute(['id' => $reservationId]);
+                    $hold->execute(['book_id' => $bookId]);
+                }
+            }
+
             $this->db->commit();
         } catch (Throwable $exception) { $this->db->rollBack(); throw $exception; }
     }

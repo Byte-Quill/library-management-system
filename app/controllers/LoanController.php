@@ -18,6 +18,6 @@ final class LoanController
     {
         AuthorizationMiddleware::requireRole(['librarian', 'administrator']); $error = null; $success = null;
         if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') { try { verify_csrf($_POST['csrf_token'] ?? null); $this->loans->returnLoan((string) ($_POST['loan_id'] ?? '')); $success = 'Book returned.'; } catch (Throwable $exception) { $error = $exception instanceof InvalidArgumentException ? $exception->getMessage() : 'Unable to return this book.'; } }
-        $loans = $this->loans->overdueForReturn(); require dirname(__DIR__) . '/views/loans/librarian.php';
+        $loans = $this->loans->activeForReturn(); require dirname(__DIR__) . '/views/loans/librarian.php';
     }
 }

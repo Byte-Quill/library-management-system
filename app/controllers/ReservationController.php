@@ -17,6 +17,8 @@ final class ReservationController
 
     public function librarian(): void
     {
-        AuthorizationMiddleware::requireRole(['librarian', 'administrator']); $this->reservations->refresh(); $reservations = $this->reservations->allActive(); require dirname(__DIR__) . '/views/reservations/librarian.php';
+        AuthorizationMiddleware::requireRole(['librarian', 'administrator']);
+        try { $this->reservations->refresh(); } catch (Throwable $exception) { error_log($exception->__toString()); }
+        $reservations = $this->reservations->allActive(); require dirname(__DIR__) . '/views/reservations/librarian.php';
     }
 }
