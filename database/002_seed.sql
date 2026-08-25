@@ -1,1 +1,1 @@
-INSERT INTO roles (name) VALUES ('member'), ('librarian'), ('administrator');
+INSERT IGNORE INTO roles (name) VALUES ('member'), ('librarian'), ('administrator');

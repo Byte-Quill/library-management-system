@@ -1,10 +1,10 @@
-CREATE TABLE roles (
+CREATE TABLE IF NOT EXISTS roles (
     id TINYINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(32) NOT NULL UNIQUE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     role_id TINYINT UNSIGNED NOT NULL,
     name VARCHAR(120) NOT NULL,
@@ -18,7 +18,7 @@ CREATE TABLE users (
     INDEX idx_users_role_status (role_id, status)
 ) ENGINE=InnoDB;
 
-CREATE TABLE categories (
+CREATE TABLE IF NOT EXISTS categories (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(120) NOT NULL UNIQUE,
     status ENUM('active', 'archived') NOT NULL DEFAULT 'active',
@@ -26,7 +26,7 @@ CREATE TABLE categories (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
-CREATE TABLE authors (
+CREATE TABLE IF NOT EXISTS authors (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(180) NOT NULL,
     status ENUM('active', 'archived') NOT NULL DEFAULT 'active',
@@ -36,7 +36,7 @@ CREATE TABLE authors (
     INDEX idx_authors_status_name (status, name)
 ) ENGINE=InnoDB;
 
-CREATE TABLE books (
+CREATE TABLE IF NOT EXISTS books (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     category_id BIGINT UNSIGNED NULL,
     title VARCHAR(255) NOT NULL,
@@ -56,7 +56,7 @@ CREATE TABLE books (
     INDEX idx_books_title (title)
 ) ENGINE=InnoDB;
 
-CREATE TABLE book_authors (
+CREATE TABLE IF NOT EXISTS book_authors (
     book_id BIGINT UNSIGNED NOT NULL,
     author_id BIGINT UNSIGNED NOT NULL,
     PRIMARY KEY (book_id, author_id),
@@ -65,7 +65,7 @@ CREATE TABLE book_authors (
     INDEX idx_book_authors_author_book (author_id, book_id)
 ) ENGINE=InnoDB;
 
-CREATE TABLE book_copies (
+CREATE TABLE IF NOT EXISTS book_copies (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     book_id BIGINT UNSIGNED NOT NULL,
     accession_number VARCHAR(64) NOT NULL UNIQUE,
@@ -78,7 +78,7 @@ CREATE TABLE book_copies (
     INDEX idx_copies_book_status (book_id, status)
 ) ENGINE=InnoDB;
 
-CREATE TABLE loans (
+CREATE TABLE IF NOT EXISTS loans (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     copy_id BIGINT UNSIGNED NOT NULL,
     member_id BIGINT UNSIGNED NOT NULL,
@@ -96,7 +96,7 @@ CREATE TABLE loans (
     INDEX idx_loans_due_active (due_at, returned_at)
 ) ENGINE=InnoDB;
 
-CREATE TABLE reservations (
+CREATE TABLE IF NOT EXISTS reservations (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     book_id BIGINT UNSIGNED NOT NULL,
     member_id BIGINT UNSIGNED NOT NULL,
@@ -111,7 +111,7 @@ CREATE TABLE reservations (
     INDEX idx_reservations_queue (book_id, status, created_at)
 ) ENGINE=InnoDB;
 
-CREATE TABLE audit_logs (
+CREATE TABLE IF NOT EXISTS audit_logs (
     id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id BIGINT UNSIGNED NULL,
     action VARCHAR(80) NOT NULL,

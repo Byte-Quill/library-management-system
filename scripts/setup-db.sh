@@ -24,35 +24,40 @@ DATABASE="${DB_NAME:-digital_library}"
 USER="${DB_USER:-root}"
 PASSWORD="${DB_PASS:-}"
 
+# If DB_URL is provided, parse it into the connection variables.
 if [ -n "${DB_URL:-}" ]; then
   echo "Using DB_URL from .env"
-  python3 - "$DB_URL" <<'PY'
+  eval "$(python3 - "$DB_URL" <<'PY'
 import sys
 from urllib.parse import urlparse
 u = urlparse(sys.argv[1])
-print(f"DB_HOST={u.hostname}")
-print(f"DB_PORT={u.port or 3306}")
-print(f"DB_NAME={u.path.lstrip('/')}")
-print(f"DB_USER={u.username}")
-print(f"DB_PASS={u.password}")
+print(f"HOST={u.hostname or '127.0.0.1'}")
+print(f"PORT={u.port or 3306}")
+print(f"DATABASE={u.path.lstrip('/')}")
+print(f"USER={u.username or ''}")
+print(f"PASSWORD={u.password or ''}")
 PY
-  exit 0
+)"
 fi
+
+if [ -z "$DATABASE" ]; then
+  echo "Could not determine database name. Set DB_NAME or DB_URL in .env."
+  exit 1
+fi
+
+run_mysql() {
+  if [ -n "$PASSWORD" ]; then
+    mysql -h "$HOST" -P "$PORT" -u "$USER" -p"$PASSWORD" "$@"
+  else
+    mysql -h "$HOST" -P "$PORT" -u "$USER" "$@"
+  fi
+}
 
 # Create database if needed
-if [ -n "$PASSWORD" ]; then
-  MYSQL_CMD=(mysql -h "$HOST" -P "$PORT" -u "$USER" -p"$PASSWORD" -e "CREATE DATABASE IF NOT EXISTS \`$DATABASE\`;" )
-else
-  MYSQL_CMD=(mysql -h "$HOST" -P "$PORT" -u "$USER" -e "CREATE DATABASE IF NOT EXISTS \`$DATABASE\`;" )
-fi
-"${MYSQL_CMD[@]}"
+run_mysql -e "CREATE DATABASE IF NOT EXISTS \`$DATABASE\`;"
 
-if [ -n "$PASSWORD" ]; then
-  mysql -h "$HOST" -P "$PORT" -u "$USER" -p"$PASSWORD" "$DATABASE" < database/001_schema.sql
-  mysql -h "$HOST" -P "$PORT" -u "$USER" -p"$PASSWORD" "$DATABASE" < database/002_seed.sql
-else
-  mysql -h "$HOST" -P "$PORT" -u "$USER" "$DATABASE" < database/001_schema.sql
-  mysql -h "$HOST" -P "$PORT" -u "$USER" "$DATABASE" < database/002_seed.sql
-fi
+# Import schema and seed data
+run_mysql "$DATABASE" < database/001_schema.sql
+run_mysql "$DATABASE" < database/002_seed.sql
 
 echo "Database bootstrap complete."
