@@ -14,7 +14,7 @@ final class LoanRepository
         return $statement->fetchAll();
     }
 
-    public function issue(int $memberId, int $copyId, int $maxActiveLoans, string $dueAt): void
+    public function issue(int $memberId, int $copyId, int $maxActiveLoans, int $loanDays): void
     {
         $this->db->beginTransaction();
         try {
@@ -34,8 +34,13 @@ final class LoanRepository
             if ((int) $duplicate->fetchColumn() > 0) {
                 throw new InvalidArgumentException('You already have an active loan for this title.');
             }
-            $loan = $this->db->prepare('INSERT INTO loans (copy_id, member_id, issued_at, due_at) VALUES (:copy_id, :member_id, NOW(), :due_at)');
-            $loan->execute(['copy_id' => $copyId, 'member_id' => $memberId, 'due_at' => $dueAt]);
+            // Compute issued_at and due_at on the database server so both
+            // timestamps share one clock and timezone.
+            $loan = $this->db->prepare('INSERT INTO loans (copy_id, member_id, issued_at, due_at) VALUES (:copy_id, :member_id, NOW(), DATE_ADD(NOW(), INTERVAL :loan_days DAY))');
+            $loan->bindValue(':copy_id', $copyId, PDO::PARAM_INT);
+            $loan->bindValue(':member_id', $memberId, PDO::PARAM_INT);
+            $loan->bindValue(':loan_days', $loanDays, PDO::PARAM_INT);
+            $loan->execute();
             $this->db->prepare("UPDATE book_copies SET status = 'borrowed' WHERE id = :copy_id")->execute(['copy_id' => $copyId]);
             // A ready reservation for this title is satisfied by this loan.
             $this->db->prepare("UPDATE reservations SET status = 'fulfilled', fulfilled_at = NOW() WHERE book_id = :book_id AND member_id = :member_id AND status = 'ready'")->execute(['book_id' => $copyData['book_id'], 'member_id' => $memberId]);

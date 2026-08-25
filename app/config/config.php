@@ -15,13 +15,31 @@ function env(string $key, ?string $default = null): string
                     continue;
                 }
                 [$name, $value] = explode('=', $line, 2);
-                $values[trim($name)] = trim($value, " \t\n\r\0\x0B\"");
+                $value = trim($value);
+                // Quoted values keep their contents (and any inline comment text
+                // inside the quotes); unquoted values stop at an inline comment.
+                if (strlen($value) >= 2 && ($value[0] === '"' || $value[0] === "'") && str_ends_with($value, $value[0])) {
+                    $value = substr($value, 1, -1);
+                } else {
+                    $hash = strpos($value, ' #');
+                    if ($hash !== false) {
+                        $value = rtrim(substr($value, 0, $hash));
+                    }
+                }
+                $values[trim($name)] = $value;
             }
         }
         $loaded = true;
     }
 
-    return $values[$key] ?? $_ENV[$key] ?? $default ?? '';
+    if (array_key_exists($key, $values)) {
+        return $values[$key];
+    }
+    $envValue = $_ENV[$key] ?? getenv($key);
+    if ($envValue !== false && $envValue !== null && $envValue !== '') {
+        return (string) $envValue;
+    }
+    return $default ?? '';
 }
 
 function databaseUrlConfig(?string $url): ?array
@@ -38,8 +56,8 @@ function databaseUrlConfig(?string $url): ?array
     $database = ltrim($parsed['path'] ?? '/', '/');
     return [
         'dsn' => sprintf('mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4', $parsed['host'], (string) ($parsed['port'] ?? 3306), $database),
-        'username' => $parsed['user'] ?? '',
-        'password' => $parsed['pass'] ?? '',
+        'username' => rawurldecode($parsed['user'] ?? ''),
+        'password' => rawurldecode($parsed['pass'] ?? ''),
     ];
 }
 

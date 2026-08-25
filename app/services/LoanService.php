@@ -15,8 +15,7 @@ final class LoanService
     {
         $id = filter_var($copyId, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
         if ($id === false) throw new InvalidArgumentException('A valid copy is required.');
-        $dueAt = (new DateTimeImmutable('now'))->modify('+' . $this->config['loan_days'] . ' days')->format('Y-m-d H:i:s');
-        $this->loans->issue($memberId, $id, $this->config['max_active_loans'], $dueAt);
+        $this->loans->issue($memberId, $id, $this->config['max_active_loans'], $this->config['loan_days']);
     }
     public function activeForReturn(): array { return $this->loans->activeForReturn(); }
     public function returnLoan(string $loanId): void
