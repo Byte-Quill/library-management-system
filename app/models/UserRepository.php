@@ -12,7 +12,14 @@ final class UserRepository
         return $statement->fetch() ?: null;
     }
 
-    public function updateProfile(int $id, string $name, string $email, ?string $passwordHash): void
+    public function emailTakenByOther(int $id, string $email): bool
+    {
+        $statement = $this->db->prepare('SELECT COUNT(*) FROM users WHERE email = :email AND id <> :id');
+        $statement->execute(['email' => $email, 'id' => $id]);
+        return (int) $statement->fetchColumn() > 0;
+    }
+
+    public function updateProfile(int $id, string $name, string $email, ?string $passwordHash): bool
     {
         if ($passwordHash === null) {
             $statement = $this->db->prepare('UPDATE users SET name = :name, email = :email WHERE id = :id AND status = \'active\'');
@@ -21,6 +28,7 @@ final class UserRepository
             $statement = $this->db->prepare('UPDATE users SET name = :name, email = :email, password_hash = :password_hash WHERE id = :id AND status = \'active\'');
             $statement->execute(['name' => $name, 'email' => $email, 'password_hash' => $passwordHash, 'id' => $id]);
         }
+        return $statement->rowCount() === 1;
     }
 
     public function allMembers(): array

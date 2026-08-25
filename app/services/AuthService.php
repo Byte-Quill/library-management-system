@@ -28,12 +28,20 @@ final class AuthService
         }
 
         $statement = $this->db->prepare('INSERT INTO users (role_id, name, email, password_hash) VALUES (:role_id, :name, :email, :password_hash)');
-        $created = $statement->execute([
-            'role_id' => $role,
-            'name' => $name,
-            'email' => $email,
-            'password_hash' => password_hash($password, PASSWORD_DEFAULT),
-        ]);
+        try {
+            $created = $statement->execute([
+                'role_id' => $role,
+                'name' => $name,
+                'email' => $email,
+                'password_hash' => password_hash($password, PASSWORD_DEFAULT),
+            ]);
+        } catch (PDOException $exception) {
+            // Unique-constraint violation from a concurrent registration.
+            if ($exception->getCode() === '23000') {
+                throw new InvalidArgumentException('An account with that email already exists.');
+            }
+            throw $exception;
+        }
         if ($created) $this->audits?->record(null, 'user_registered', 'user', (int) $this->db->lastInsertId());
         return $created;
     }
