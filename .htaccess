@@ -1,10 +1,19 @@
 Options -Indexes
 RewriteEngine On
+
+# Serve static assets from public/assets when the document root is the
+# project root (single-root shared hosting layout). When the document
+# root is already public/, the file exists and this rule is skipped.
+RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule ^assets/(.*)$ public/assets/$1 [L]
+
+# Deny direct web access to application code, SQL, scripts, and tests.
+RewriteRule ^(app|database|scripts|tests)(/|$) - [F,L]
+
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^ public/index.php [L]
 
-<FilesMatch "^(\.env|composer\.(json|lock)|README\.md)$">
+<FilesMatch "^(\.env|\.env\..*|composer\.(json|lock)|README\.md|.*\.sql|.*\.sh)$">
     Require all denied
 </FilesMatch>
