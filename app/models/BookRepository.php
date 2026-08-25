@@ -13,12 +13,13 @@ final class BookRepository
         $parameters = [];
 
         if ($filters['query'] !== '') {
-            $conditions[] = '(b.title LIKE :query OR b.isbn LIKE :query OR EXISTS (
+            $conditions[] = '(b.title LIKE :title_query OR b.isbn LIKE :isbn_query OR EXISTS (
                 SELECT 1 FROM book_authors search_ba
                 INNER JOIN authors search_a ON search_a.id = search_ba.author_id
                 WHERE search_ba.book_id = b.id AND search_a.name LIKE :author_query
             ))';
-            $parameters['query'] = '%' . $filters['query'] . '%';
+            $parameters['title_query'] = '%' . $filters['query'] . '%';
+            $parameters['isbn_query'] = '%' . $filters['query'] . '%';
             $parameters['author_query'] = '%' . $filters['query'] . '%';
         }
         if ($filters['category_id'] !== null) {
@@ -78,12 +79,13 @@ final class BookRepository
         $conditions = ["b.status = 'active'"];
         $parameters = [];
         if ($filters['query'] !== '') {
-            $conditions[] = '(b.title LIKE :query OR b.isbn LIKE :query OR EXISTS (
+            $conditions[] = '(b.title LIKE :title_query OR b.isbn LIKE :isbn_query OR EXISTS (
                 SELECT 1 FROM book_authors search_ba
                 INNER JOIN authors search_a ON search_a.id = search_ba.author_id
                 WHERE search_ba.book_id = b.id AND search_a.name LIKE :author_query
             ))';
-            $parameters['query'] = '%' . $filters['query'] . '%';
+            $parameters['title_query'] = '%' . $filters['query'] . '%';
+            $parameters['isbn_query'] = '%' . $filters['query'] . '%';
             $parameters['author_query'] = '%' . $filters['query'] . '%';
         }
         if ($filters['category_id'] !== null) {
