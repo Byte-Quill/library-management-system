@@ -42,16 +42,26 @@ final class BookRepository
         $where = implode(' AND ', $conditions);
         $statement = $this->db->prepare("SELECT b.id, b.title, b.isbn, b.publisher, b.publication_year, b.language,
                 b.description, b.page_count, b.cover_path, c.name AS category,
-                COUNT(DISTINCT copies.id) AS copy_count,
-                SUM(CASE WHEN copies.status = 'available' THEN 1 ELSE 0 END) AS available_count,
-                GROUP_CONCAT(DISTINCT authors.name ORDER BY authors.name SEPARATOR ', ') AS authors
+                COALESCE(copy_stats.copy_count, 0) AS copy_count,
+                COALESCE(copy_stats.available_count, 0) AS available_count,
+                author_stats.authors AS authors
             FROM books b
             LEFT JOIN categories c ON c.id = b.category_id AND c.status = 'active'
-            LEFT JOIN book_copies copies ON copies.book_id = b.id
-            LEFT JOIN book_authors ba ON ba.book_id = b.id
-            LEFT JOIN authors ON authors.id = ba.author_id AND authors.status = 'active'
+            LEFT JOIN (
+                SELECT book_id,
+                    COUNT(*) AS copy_count,
+                    SUM(CASE WHEN status = 'available' THEN 1 ELSE 0 END) AS available_count
+                FROM book_copies
+                GROUP BY book_id
+            ) copy_stats ON copy_stats.book_id = b.id
+            LEFT JOIN (
+                SELECT ba.book_id,
+                    GROUP_CONCAT(a.name ORDER BY a.name SEPARATOR ', ') AS authors
+                FROM book_authors ba
+                INNER JOIN authors a ON a.id = ba.author_id AND a.status = 'active'
+                GROUP BY ba.book_id
+            ) author_stats ON author_stats.book_id = b.id
             WHERE {$where}
-            GROUP BY b.id
             ORDER BY b.title ASC
             LIMIT :limit OFFSET :offset");
         foreach ($parameters as $name => $value) {

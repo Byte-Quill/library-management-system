@@ -32,7 +32,8 @@ CREATE TABLE authors (
     status ENUM('active', 'archived') NOT NULL DEFAULT 'active',
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    UNIQUE KEY uq_authors_name (name)
+    UNIQUE KEY uq_authors_name (name),
+    INDEX idx_authors_status_name (status, name)
 ) ENGINE=InnoDB;
 
 CREATE TABLE books (
@@ -51,6 +52,7 @@ CREATE TABLE books (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_books_category FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL,
     INDEX idx_books_catalog (status, category_id, language, publication_year),
+    INDEX idx_books_status_title (status, title),
     INDEX idx_books_title (title)
 ) ENGINE=InnoDB;
 
@@ -59,7 +61,8 @@ CREATE TABLE book_authors (
     author_id BIGINT UNSIGNED NOT NULL,
     PRIMARY KEY (book_id, author_id),
     CONSTRAINT fk_book_authors_book FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE,
-    CONSTRAINT fk_book_authors_author FOREIGN KEY (author_id) REFERENCES authors(id) ON DELETE RESTRICT
+    CONSTRAINT fk_book_authors_author FOREIGN KEY (author_id) REFERENCES authors(id) ON DELETE RESTRICT,
+    INDEX idx_book_authors_author_book (author_id, book_id)
 ) ENGINE=InnoDB;
 
 CREATE TABLE book_copies (
