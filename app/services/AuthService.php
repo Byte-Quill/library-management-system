@@ -46,11 +46,6 @@ final class AuthService
         return $created;
     }
 
-    public function createMember(string $name, string $email, string $password): bool
-    {
-        return $this->register($name, $email, $password);
-    }
-
     public function attempt(string $email, string $password): ?array
     {
         $statement = $this->db->prepare('SELECT u.id, u.name, u.email, u.password_hash, r.name AS role FROM users u INNER JOIN roles r ON r.id = u.role_id WHERE u.email = :email AND u.status = \'active\' LIMIT 1');

@@ -1,9 +1,6 @@
 <?php
 declare(strict_types=1);
 
-require_once dirname(__DIR__) . '/services/CopyService.php';
-require_once dirname(__DIR__) . '/models/BookManagementRepository.php';
-
 final class CopyController
 {
     public function __construct(private CopyService $copies, private BookManagementRepository $books)

@@ -1,8 +1,6 @@
 <?php
 declare(strict_types=1);
 
-require_once dirname(__DIR__) . '/models/UserRepository.php';
-
 final class ProfileService
 {
     public function __construct(private UserRepository $users, private ?AuditService $audits = null) {}

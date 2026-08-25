@@ -14,6 +14,6 @@ final class MemberService
 
     public function create(string $name, string $email, string $password): void
     {
-        $this->auth->createMember($name, $email, $password);
+        $this->auth->register($name, $email, $password);
     }
 }

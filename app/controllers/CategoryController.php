@@ -9,7 +9,7 @@ final class CategoryController
 
     public function index(): void
     {
-        $user = AuthorizationMiddleware::requireRole(['librarian', 'administrator']);
+        AuthorizationMiddleware::requireRole(['librarian', 'administrator']);
         $error = null;
         $success = null;
         if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {

@@ -1,8 +1,6 @@
 <?php
 declare(strict_types=1);
 
-require_once dirname(__DIR__) . '/models/LoanRepository.php';
-
 final class LoanService
 {
     public function __construct(private LoanRepository $loans, private array $config, private ?ReservationRepository $reservations = null, private ?CopyRepository $copies = null)
