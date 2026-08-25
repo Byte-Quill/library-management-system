@@ -13,10 +13,10 @@ declare(strict_types=1);
 
 return [
     // Legal pages (static views).
-    '/privacy-policy' => static fn (): void => require dirname(__DIR__) . '/views/legal/privacy.php',
-    '/terms' => static fn (): void => require dirname(__DIR__) . '/views/legal/terms.php',
-    '/contact' => static fn (): void => require dirname(__DIR__) . '/views/legal/contact.php',
-    '/accessibility' => static fn (): void => require dirname(__DIR__) . '/views/legal/accessibility.php',
+    '/privacy-policy' => static function (): void { require __DIR__ . '/views/legal/privacy.php'; },
+    '/terms' => static function (): void { require __DIR__ . '/views/legal/terms.php'; },
+    '/contact' => static function (): void { require __DIR__ . '/views/legal/contact.php'; },
+    '/accessibility' => static function (): void { require __DIR__ . '/views/legal/accessibility.php'; },
 
     // Authentication.
     '/login' => static function (array $config): void {
