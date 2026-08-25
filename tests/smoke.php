@@ -21,6 +21,7 @@ $classes = [
     'AuthorController',
     'AuthorRepository',
     'AuthorService',
+    'AuthController',
     'BookManagementController',
     'BookManagementRepository',
     'BookManagementService',
@@ -65,6 +66,7 @@ $views = [
     'categories/index.php',
     'copies/index.php',
     'dashboard/index.php',
+    'errors/404.php',
     'errors/403.php',
     'legal/privacy.php',
     'legal/terms.php',
@@ -80,6 +82,25 @@ $views = [
 foreach ($views as $view) {
     if (!is_file(dirname(__DIR__) . '/app/views/' . $view)) {
         throw new RuntimeException("Missing view: {$view}");
+    }
+}
+
+// The route table must exist and cover every application path.
+$routes = require dirname(__DIR__) . '/app/routes.php';
+if (!is_array($routes)) {
+    throw new RuntimeException('Route table did not return an array.');
+}
+$paths = [
+    '/', '/login', '/register', '/logout', '/dashboard', '/profile',
+    '/loans', '/reservations',
+    '/manage/categories', '/manage/authors', '/manage/members', '/manage/books',
+    '/manage/copies', '/manage/returns', '/manage/reservations',
+    '/admin/audit',
+    '/privacy-policy', '/terms', '/contact', '/accessibility',
+];
+foreach ($paths as $path) {
+    if (!isset($routes[$path]) || !is_callable($routes[$path])) {
+        throw new RuntimeException("Missing route handler: {$path}");
     }
 }
 
