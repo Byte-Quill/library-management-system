@@ -42,11 +42,12 @@ The application uses a small layered MVC-style structure without a framework:
 
 ```text
 public/                         Web-accessible document root
-  index.php                     Front controller and route dispatch
+  index.php                     Front controller: dispatches via the route table
   assets/                       CSS and browser assets
 app/
   autoload.php                  Native class loader for application modules
   bootstrap.php                 Configuration, sessions, headers, errors
+  routes.php                    Declarative route table (path => handler)
   config/                       Environment and PDO configuration
   controllers/                  HTTP input and view orchestration
   helpers/                      Stateless shared helpers
@@ -54,6 +55,7 @@ app/
   models/                       PDO repositories and query methods
   services/                     Business rules and validation
   views/                        Escaped server-rendered templates
+    partials/                   Shared layout head/header/footer partials
 database/
   001_schema.sql                Normalized tables, keys, and indexes
   002_seed.sql                  Initial roles and administrator seed
@@ -67,10 +69,10 @@ tests/                          Smoke and future integration tests
 
 1. Apache rewrites a request to `public/index.php`.
 2. `app/bootstrap.php` loads configuration, secure sessions, error handling, headers, and the native autoloader.
-3. The front controller selects a route and constructs the required controller, service, and repository.
+3. The front controller looks the path up in `app/routes.php` and invokes the matching handler, which constructs the required controller, service, and repository. Unknown paths render the 404 view.
 4. Controllers validate request intent and delegate business rules to services.
 5. Repositories execute prepared PDO queries.
-6. Views escape dynamic output with `e()` before rendering HTML.
+6. Views escape dynamic output with `e()` and share the page shell through `views/partials/layout-top.php` and `layout-bottom.php`.
 
 Keep SQL out of views, business rules out of templates, and authorization in middleware or services rather than in JavaScript.
 
