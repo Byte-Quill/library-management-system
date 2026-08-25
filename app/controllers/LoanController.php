@@ -11,7 +11,7 @@ final class LoanController
     {
         $user = AuthorizationMiddleware::requireRole(['member']); $error = null; $success = null;
         if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') { try { verify_csrf($_POST['csrf_token'] ?? null); $this->loans->issue((int) $user['id'], (string) ($_POST['copy_id'] ?? '')); $success = 'Book borrowed.'; } catch (Throwable $exception) { $error = $exception instanceof InvalidArgumentException ? $exception->getMessage() : 'Unable to borrow this book.'; } }
-        $loans = $this->loans->activeForMember((int) $user['id']); require dirname(__DIR__) . '/views/loans/member.php';
+        $loans = $this->loans->activeForMember((int) $user['id']); $availableCopies = $this->loans->availableCopies(); require dirname(__DIR__) . '/views/loans/member.php';
     }
 
     public function librarian(): void

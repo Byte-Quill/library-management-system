@@ -5,11 +5,12 @@ require_once dirname(__DIR__) . '/models/LoanRepository.php';
 
 final class LoanService
 {
-    public function __construct(private LoanRepository $loans, private array $config, private ?ReservationRepository $reservations = null)
+    public function __construct(private LoanRepository $loans, private array $config, private ?ReservationRepository $reservations = null, private ?CopyRepository $copies = null)
     {
     }
 
     public function activeForMember(int $memberId): array { return $this->loans->activeForMember($memberId); }
+    public function availableCopies(): array { return $this->copies?->availableForLoan() ?? []; }
     public function issue(int $memberId, string $copyId): void
     {
         $id = filter_var($copyId, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);

@@ -14,6 +14,11 @@ final class ReservationRepository
         return $statement->fetchAll();
     }
 
+    public function reservableBooks(): array
+    {
+        return $this->db->query("SELECT id, title FROM books WHERE status = 'active' ORDER BY title ASC")->fetchAll();
+    }
+
     public function allActive(): array
     {
         return $this->db->query("SELECT r.id, r.status, r.created_at, r.expires_at, b.title, u.name AS member_name FROM reservations r INNER JOIN books b ON b.id = r.book_id INNER JOIN users u ON u.id = r.member_id WHERE r.status IN ('pending', 'ready') ORDER BY r.book_id, r.created_at")->fetchAll();

@@ -9,6 +9,7 @@ final class ReservationService
 
     public function refresh(): void { $this->reservations->expireAndPromote(); }
     public function forMember(int $memberId): array { return $this->reservations->forMember($memberId); }
+    public function reservableBooks(): array { return $this->reservations->reservableBooks(); }
     public function allActive(): array { return $this->reservations->allActive(); }
     public function create(int $memberId, string $bookId): void
     {

@@ -137,12 +137,12 @@ if ($path === '/manage/copies') {
 }
 
 if ($path === '/loans') {
-    (new LoanController(new LoanService(new LoanRepository(database($config)), $config, new ReservationRepository(database($config)))))->member();
+    (new LoanController(new LoanService(new LoanRepository(database($config)), $config, new ReservationRepository(database($config)), new CopyRepository(database($config)))))->member();
     exit;
 }
 
 if ($path === '/manage/returns') {
-    (new LoanController(new LoanService(new LoanRepository(database($config)), $config, new ReservationRepository(database($config)))))->librarian();
+    (new LoanController(new LoanService(new LoanRepository(database($config)), $config, new ReservationRepository(database($config)), new CopyRepository(database($config)))))->librarian();
     exit;
 }
 

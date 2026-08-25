@@ -32,8 +32,21 @@ final class BookManagementRepository
 
     public function archive(int $id): bool
     {
-        $statement = $this->db->prepare("UPDATE books SET status = 'archived' WHERE id = :id AND status = 'active'");
-        $statement->execute(['id' => $id]);
-        return $statement->rowCount() === 1;
+        $this->db->beginTransaction();
+        try {
+            $statement = $this->db->prepare("UPDATE books SET status = 'archived' WHERE id = :id AND status = 'active'");
+            $statement->execute(['id' => $id]);
+            $archived = $statement->rowCount() === 1;
+            if ($archived) {
+                // Archived titles can no longer be borrowed; drop their queue.
+                $this->db->prepare("UPDATE reservations SET status = 'cancelled' WHERE book_id = :id AND status IN ('pending', 'ready')")->execute(['id' => $id]);
+                $this->db->prepare("UPDATE book_copies SET status = 'available' WHERE book_id = :id AND status = 'reserved'")->execute(['id' => $id]);
+            }
+            $this->db->commit();
+            return $archived;
+        } catch (Throwable $exception) {
+            $this->db->rollBack();
+            throw $exception;
+        }
     }
 }
