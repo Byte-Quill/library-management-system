@@ -6,9 +6,22 @@
 *.pem
 *.crt
 
+# Local shell and editor state
+.bash_profile
+.bashrc
+.gitconfig
+.gitmodules
+.mcp.json
+.profile
+.ripgreprc
+.zprofile
+.zshrc
+.idea/
+.vscode/
+
 # Dependencies and generated PHP tooling
 /vendor/
-/.phpunit.result.cache
+.phpunit.result.cache
 /coverage/
 /build/
 
@@ -31,8 +44,6 @@
 # IDE and operating-system files
 .DS_Store
 Thumbs.db
-.idea/
-.vscode/
 *.swp
 *.swo
 

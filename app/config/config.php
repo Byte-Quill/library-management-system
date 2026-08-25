@@ -24,6 +24,31 @@ function env(string $key, ?string $default = null): string
     return $values[$key] ?? $_ENV[$key] ?? $default ?? '';
 }
 
+function databaseUrlConfig(?string $url): ?array
+{
+    if ($url === null || trim($url) === '') {
+        return null;
+    }
+
+    $parsed = parse_url($url);
+    if ($parsed === false || empty($parsed['host']) || empty($parsed['scheme'])) {
+        return null;
+    }
+
+    $database = ltrim($parsed['path'] ?? '/', '/');
+    return [
+        'dsn' => sprintf('mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4', $parsed['host'], (string) ($parsed['port'] ?? 3306), $database),
+        'username' => $parsed['user'] ?? '',
+        'password' => $parsed['pass'] ?? '',
+    ];
+}
+
+$dbConfig = databaseUrlConfig(env('DB_URL')) ?? [
+    'dsn' => sprintf('mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4', env('DB_HOST', '127.0.0.1'), env('DB_PORT', '3306'), env('DB_NAME', 'digital_library')),
+    'username' => env('DB_USER', ''),
+    'password' => env('DB_PASS', ''),
+];
+
 return [
     'env' => env('APP_ENV', 'production'),
     'url' => rtrim(env('APP_URL', ''), '/'),
@@ -36,9 +61,5 @@ return [
         'max_amount' => max(0, (float) env('FINE_MAX_AMOUNT', '100.00')),
     ],
     'upload_max_bytes' => max(1, (int) env('UPLOAD_MAX_BYTES', '2097152')),
-    'database' => [
-        'dsn' => sprintf('mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4', env('DB_HOST', '127.0.0.1'), env('DB_PORT', '3306'), env('DB_NAME', 'digital_library')),
-        'username' => env('DB_USER'),
-        'password' => env('DB_PASS'),
-    ],
+    'database' => $dbConfig,
 ];

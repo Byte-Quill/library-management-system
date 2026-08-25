@@ -85,18 +85,24 @@ Keep SQL out of views, business rules out of templates, and authorization in mid
 ### Local setup
 
 1. Copy `.env.example` to `.env`.
-2. Set a unique database name, user, and password in `.env`.
-3. Create the database and grant the application user only the required database privileges.
-4. Run `database/001_schema.sql`.
-5. Run `database/002_seed.sql`.
-6. Set `APP_ENV=development` only for local work.
-7. Start the server from the project root:
+2. Set `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, and `DB_PASS` in `.env`, or set `DB_URL` directly.
+3. Run the database bootstrap helper from the project root:
+
+   ```sh
+   bash scripts/setup-db.sh
+   ```
+
+   This creates the database if needed and imports both `database/001_schema.sql` and `database/002_seed.sql`.
+4. Set `APP_ENV=development` only for local work.
+5. Start the server from the project root:
 
    ```sh
    php -S localhost:8000 -t public
    ```
 
-8. Open `http://localhost:8000`.
+6. Open `http://localhost:8000`.
+
+For a hosted database, set `DB_URL` directly or use the explicit `DB_*` settings. The configuration accepts either form.
 
 The seed file contains the initial role records. Replace any seeded administrator password before production use if one is added to the seed process.
 
