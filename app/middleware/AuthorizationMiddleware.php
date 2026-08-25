@@ -15,7 +15,24 @@ final class AuthorizationMiddleware
             header('Location: /login', true, 303);
             exit;
         }
-        return $user;
+
+        // Revalidate against the database so suspended or removed accounts
+        // lose access immediately instead of when the session expires.
+        try {
+            $fresh = (new UserRepository(database($GLOBALS['config'])))->find((int) ($user['id'] ?? 0));
+        } catch (Throwable $exception) {
+            error_log($exception->__toString());
+            return $user; // Database unavailable; keep the cached session user.
+        }
+        if ($fresh === null || ($fresh['status'] ?? '') !== 'active') {
+            $_SESSION = [];
+            session_regenerate_id(true);
+            header('Location: /login', true, 303);
+            exit;
+        }
+        unset($fresh['password_hash']);
+        $_SESSION['user'] = $fresh;
+        return $fresh;
     }
 
     public static function requireRole(array $roles): array

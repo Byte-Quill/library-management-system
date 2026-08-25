@@ -13,7 +13,7 @@ header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: DENY');
 header('Referrer-Policy: strict-origin-when-cross-origin');
 header("Content-Security-Policy: default-src 'self'; style-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'");
-if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+if (is_https()) {
     header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
 }
 

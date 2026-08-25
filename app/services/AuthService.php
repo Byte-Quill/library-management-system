@@ -49,7 +49,10 @@ final class AuthService
         $statement->execute(['email' => strtolower($email)]);
         $user = $statement->fetch();
 
-        if (!$user || !password_verify($password, $user['password_hash'])) {
+        // Always run password_verify (even for unknown emails) to keep the
+        // response timing consistent and slow down account enumeration.
+        $hash = $user['password_hash'] ?? '$2y$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy';
+        if (!$user || !password_verify($password, $hash)) {
             $this->audits?->record(null, 'login_failed', 'user', isset($user['id']) ? (int) $user['id'] : null);
             return null;
         }

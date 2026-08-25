@@ -7,10 +7,12 @@ function start_secure_session(array $config): void
         return;
     }
 
+    ini_set('session.use_strict_mode', '1');
+
     session_set_cookie_params([
         'lifetime' => 0,
         'path' => '/',
-        'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+        'secure' => is_https(),
         'httponly' => true,
         'samesite' => 'Lax',
     ]);
@@ -33,6 +35,15 @@ function csrf_token(): string
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
     }
     return $_SESSION['csrf_token'];
+}
+
+function is_https(): bool
+{
+    if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+        return true;
+    }
+    // Typical behind TLS-terminating proxies on shared hosting.
+    return ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https';
 }
 
 function verify_csrf(?string $token): void

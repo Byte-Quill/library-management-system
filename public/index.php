@@ -27,36 +27,51 @@ if (in_array($path, ['/privacy-policy', '/terms', '/contact', '/accessibility'],
 if (in_array($path, ['/login', '/register'], true)) {
     $mode = ltrim($path, '/');
     $error = null;
+    $notice = ($mode === 'login' && isset($_GET['registered'])) ? 'Registration complete. You can now log in.' : null;
 
     if ($method === 'POST') {
         verify_csrf($_POST['csrf_token'] ?? null);
-        $name = trim((string) ($_POST['name'] ?? ''));
-        $email = trim((string) ($_POST['email'] ?? ''));
-        $password = (string) ($_POST['password'] ?? '');
 
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL) || ($mode === 'register' && ($name === '' || strlen($name) > 120)) || strlen($password) < 8 || strlen($password) > 4096) {
-            $error = 'Please provide valid details. Passwords must contain at least 8 characters.';
+        // Simple session-based throttle against brute-force attempts.
+        $now = time();
+        $attempts = $_SESSION['login_attempts'] ?? [];
+        $attempts = array_filter($attempts, static fn (int $timestamp): bool => $timestamp > $now - 900);
+        if (count($attempts) >= 10) {
+            $error = 'Too many attempts. Please try again in a few minutes.';
         } else {
-            try {
-                $db = database($config);
-                $auth = new AuthService($db, new AuditService(new AuditRepository($db)));
-                if ($mode === 'register') {
-                    $auth->register($name, $email, $password);
-                    header('Location: /login?registered=1', true, 303);
-                    exit;
+            $name = trim((string) ($_POST['name'] ?? ''));
+            $email = trim((string) ($_POST['email'] ?? ''));
+            $password = (string) ($_POST['password'] ?? '');
+
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL) || ($mode === 'register' && ($name === '' || strlen($name) > 120)) || strlen($password) < 8 || strlen($password) > 4096) {
+                $error = 'Please provide valid details. Passwords must contain at least 8 characters.';
+            } else {
+                try {
+                    $db = database($config);
+                    $auth = new AuthService($db, new AuditService(new AuditRepository($db)));
+                    if ($mode === 'register') {
+                        $auth->register($name, $email, $password);
+                        header('Location: /login?registered=1', true, 303);
+                        exit;
+                    }
+                    $attempts[] = $now;
+                    $_SESSION['login_attempts'] = $attempts;
+                    $user = $auth->attempt($email, $password);
+                    if ($user === null) {
+                        $error = 'The email or password is incorrect.';
+                    } else {
+                        unset($_SESSION['login_attempts']);
+                        session_regenerate_id(true);
+                        $_SESSION['user'] = $user;
+                        header('Location: /dashboard', true, 303);
+                        exit;
+                    }
+                } catch (InvalidArgumentException $exception) {
+                    $error = $exception->getMessage();
+                } catch (Throwable $exception) {
+                    $error = 'Unable to complete this request.';
+                    error_log($exception->__toString());
                 }
-                $user = $auth->attempt($email, $password);
-                if ($user === null) {
-                    $error = 'The email or password is incorrect.';
-                } else {
-                    session_regenerate_id(true);
-                    $_SESSION['user'] = $user;
-                    header('Location: /dashboard', true, 303);
-                    exit;
-                }
-            } catch (Throwable $exception) {
-                $error = 'Unable to complete this request.';
-                error_log($exception->__toString());
             }
         }
     }
