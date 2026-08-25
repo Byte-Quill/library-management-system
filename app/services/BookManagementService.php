@@ -17,19 +17,21 @@ final class BookManagementService
         if ($title === '' || strlen($title) > 255 || $language === '' || strlen($language) > 80 || $authorIds === []) {
             throw new InvalidArgumentException('Title, language, and at least one author are required.');
         }
+        $year = filter_var($input['publication_year'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 9999]]) ?: null;
+        $pages = filter_var($input['page_count'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 100000]]) ?: null;
         $cover = $this->uploads->store($files['cover'] ?? []);
         try {
             $this->books->create([
                 'category_id' => filter_var($input['category_id'] ?? null, FILTER_VALIDATE_INT) ?: null,
                 'title' => $title, 'isbn' => trim((string) ($input['isbn'] ?? '')) ?: null,
                 'publisher' => trim((string) ($input['publisher'] ?? '')) ?: null,
-                'publication_year' => filter_var($input['publication_year'] ?? null, FILTER_VALIDATE_INT) ?: null,
+                'publication_year' => $year,
                 'language' => $language, 'description' => trim((string) ($input['description'] ?? '')) ?: null,
-                'page_count' => filter_var($input['page_count'] ?? null, FILTER_VALIDATE_INT) ?: null,
+                'page_count' => $pages,
                 'cover_path' => $cover,
             ], $authorIds);
         } catch (Throwable $exception) {
-            if ($cover !== null) @unlink(dirname(__DIR__, 2) . '/storage/uploads/' . $cover);
+            if ($cover !== null) $this->uploads->delete($cover);
             throw $exception;
         }
     }

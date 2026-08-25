@@ -26,4 +26,12 @@ final class UploadService
         chmod($path, 0640);
         return $filename;
     }
+
+    public function delete(string $filename): void
+    {
+        // Reject path traversal; only plain generated filenames are stored.
+        if (basename($filename) !== $filename) return;
+        $path = $this->directory . DIRECTORY_SEPARATOR . $filename;
+        if (is_file($path)) @unlink($path);
+    }
 }

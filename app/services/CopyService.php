@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 final class CopyService
 {
-    private const STATUSES = ['available', 'borrowed', 'reserved', 'maintenance', 'lost', 'damaged'];
+    // Statuses a librarian may set directly. 'borrowed' and 'reserved' are
+    // managed exclusively by the loan and reservation flows.
+    private const STATUSES = ['available', 'maintenance', 'lost', 'damaged'];
 
     public function __construct(private CopyRepository $copies)
     {
