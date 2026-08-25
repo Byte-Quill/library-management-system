@@ -15,9 +15,8 @@ if (e('<script>alert(1)</script>') !== '&lt;script&gt;alert(1)&lt;/script&gt;') 
 $classes = [
     'AuthorizationMiddleware',
     'AuthService',
+    'AuditController',
     'AuditService',
-    'AuditLogService',
-    'AuditLogRepository',
     'AuditRepository',
     'AuthorController',
     'AuthorRepository',

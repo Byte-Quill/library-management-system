@@ -155,7 +155,7 @@ if ($path === '/manage/reservations') {
 }
 
 if ($path === '/admin/audit') {
-    (new AuditLogController(new AuditLogService(new AuditLogRepository(database($config)))))->index();
+    (new AuditController(new AuditService(new AuditRepository(database($config)))))->index();
     exit;
 }
 
