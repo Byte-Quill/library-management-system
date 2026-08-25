@@ -10,6 +10,8 @@
   --accent: #1d4ed8;
   --accent-soft: #e8effc;
   --accent-strong: #1e3a8a;
+  --accent-red: #dc2626;
+  --accent-red-soft: #fdeaea;
   --danger: #dc2626;
   --danger-soft: #fdeaea;
   --warning: #dc2626;
@@ -84,7 +86,7 @@ textarea {
   width: 2.25rem;
   height: 2.25rem;
   border-radius: 0.8rem;
-  background: linear-gradient(135deg, var(--accent), #3b82f6);
+  background: linear-gradient(135deg, var(--accent), var(--accent-red));
   color: white;
   font-size: 0.8rem;
   font-weight: 700;
@@ -126,8 +128,8 @@ textarea {
 }
 
 .site-header nav .nav-button {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: linear-gradient(135deg, var(--accent), var(--accent-red));
+  border-color: transparent;
   color: white;
 }
 
@@ -175,7 +177,7 @@ textarea {
 
 .eyebrow {
   margin: 0 0 0.7rem;
-  color: var(--accent);
+  color: var(--accent-red);
   font-size: 0.74rem;
   font-weight: 700;
   letter-spacing: 0.15em;
@@ -217,7 +219,7 @@ p {
   justify-content: center;
   gap: 1rem;
   padding: 1.5rem;
-  background: linear-gradient(180deg, #1e3a8a 0%, #1d4ed8 100%);
+  background: linear-gradient(150deg, #1e3a8a 0%, #1d4ed8 55%, #b91c1c 125%);
   color: #eef2ff;
 }
 
@@ -331,7 +333,7 @@ p {
   padding: 0.75rem 1.2rem;
   border: 0;
   border-radius: 12px;
-  background: var(--accent);
+  background: linear-gradient(135deg, var(--accent), var(--accent-red));
   color: white;
   font-weight: 700;
   cursor: pointer;
@@ -389,7 +391,7 @@ p {
   justify-content: center;
   min-height: 120px;
   border-radius: 14px;
-  background: linear-gradient(135deg, #1e3a8a, #2563eb 55%, #60a5fa);
+  background: linear-gradient(135deg, #1e3a8a, #2563eb 52%, #dc2626 130%);
   color: white;
   font-size: 2rem;
   font-weight: 700;
