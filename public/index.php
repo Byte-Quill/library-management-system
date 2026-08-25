@@ -13,6 +13,17 @@ require_once dirname(__DIR__) . '/app/models/AuditLogRepository.php';
 $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
+if (in_array($path, ['/privacy-policy', '/terms', '/contact', '/accessibility'], true)) {
+    $page = match ($path) {
+        '/privacy-policy' => 'privacy',
+        '/terms' => 'terms',
+        '/contact' => 'contact',
+        default => 'accessibility',
+    };
+    require dirname(__DIR__) . '/app/views/legal/' . $page . '.php';
+    exit;
+}
+
 if (in_array($path, ['/login', '/register'], true)) {
     $mode = ltrim($path, '/');
     $error = null;
