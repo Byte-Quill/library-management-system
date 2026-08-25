@@ -23,8 +23,12 @@ $query = http_build_query(array_filter([
     </a>
     <nav aria-label="Main navigation">
         <a href="/">Browse</a>
-        <a href="/login">Log in</a>
-        <a class="nav-button" href="/login">Join now</a>
+        <?php if (AuthorizationMiddleware::currentUser() !== null): ?>
+            <a class="nav-button" href="/dashboard">My dashboard</a>
+        <?php else: ?>
+            <a href="/login">Log in</a>
+            <a class="nav-button" href="/register">Join now</a>
+        <?php endif; ?>
     </nav>
 </header>
 <main class="container page-shell">

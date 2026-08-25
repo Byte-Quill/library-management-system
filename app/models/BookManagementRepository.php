@@ -9,7 +9,7 @@ final class BookManagementRepository
 
     public function all(): array
     {
-        return $this->db->query("SELECT b.id, b.title, b.isbn, b.status, c.name AS category, COUNT(copies.id) AS copy_count FROM books b LEFT JOIN categories c ON c.id = b.category_id LEFT JOIN book_copies copies ON copies.book_id = b.id GROUP BY b.id ORDER BY b.title")->fetchAll();
+        return $this->db->query("SELECT b.id, b.title, b.isbn, b.status, MAX(c.name) AS category, COUNT(copies.id) AS copy_count FROM books b LEFT JOIN categories c ON c.id = b.category_id LEFT JOIN book_copies copies ON copies.book_id = b.id GROUP BY b.id, b.title, b.isbn, b.status ORDER BY b.title")->fetchAll();
     }
 
     public function create(array $book, array $authorIds): void

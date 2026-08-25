@@ -115,6 +115,7 @@ All supported values are listed in `.env.example`:
 - `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASS`: database connection
 - `SESSION_TIMEOUT`: inactivity timeout in seconds
 - `MAX_ACTIVE_LOANS`: member loan limit
+- `LOAN_DAYS`: number of days a loan is issued for
 - `FINE_DAILY_RATE`, `FINE_GRACE_DAYS`, `FINE_MAX_AMOUNT`: configurable fine policy
 - `UPLOAD_MAX_BYTES`: maximum cover upload size
 
