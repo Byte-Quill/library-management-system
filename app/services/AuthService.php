@@ -65,6 +65,14 @@ final class AuthService
             return null;
         }
 
+        // Transparently upgrade hashes when the algorithm or cost changes.
+        if (password_needs_rehash($user['password_hash'], PASSWORD_DEFAULT)) {
+            $this->db->prepare('UPDATE users SET password_hash = :password_hash WHERE id = :id')->execute([
+                'password_hash' => password_hash($password, PASSWORD_DEFAULT),
+                'id' => $user['id'],
+            ]);
+        }
+
         $this->db->prepare('UPDATE users SET last_login_at = NOW() WHERE id = :id')->execute(['id' => $user['id']]);
         unset($user['password_hash']);
         $this->audits?->record((int) $user['id'], 'login_succeeded', 'user', (int) $user['id']);

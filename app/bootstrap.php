@@ -12,8 +12,9 @@ start_secure_session($config);
 header('X-Content-Type-Options: nosniff');
 header('X-Frame-Options: DENY');
 header('Referrer-Policy: strict-origin-when-cross-origin');
-header("Content-Security-Policy: default-src 'self'; style-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'");
-if (is_https()) {
+header("Content-Security-Policy: default-src 'self'; img-src 'self'; style-src 'self'; script-src 'self'; form-action 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'");
+header('Permissions-Policy: geolocation=(), microphone=(), camera=()');
+if (is_https($config)) {
     header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
 }
 

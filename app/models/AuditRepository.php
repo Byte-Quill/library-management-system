@@ -16,7 +16,7 @@ final class AuditRepository
             'entity_type' => $entityType,
             'entity_id' => $entityId,
             'ip_address' => substr((string) ($_SERVER['REMOTE_ADDR'] ?? ''), 0, 45) ?: null,
-            'user_agent' => substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 512) ?: null,
+            'user_agent' => substr(preg_replace('/[\x00-\x1F\x7F]/', '', (string) ($_SERVER['HTTP_USER_AGENT'] ?? '')) ?? '', 0, 512) ?: null,
             'metadata' => $metadata === [] ? null : json_encode($metadata, JSON_THROW_ON_ERROR),
         ]);
     }

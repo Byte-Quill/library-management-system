@@ -25,12 +25,14 @@ if (in_array($path, ['/login', '/register'], true)) {
     if ($method === 'POST') {
         verify_csrf($_POST['csrf_token'] ?? null);
 
-        // Simple session-based throttle against brute-force attempts.
+        // Session-based throttle against brute-force and abuse.
         $now = time();
         $attempts = $_SESSION['login_attempts'] ?? [];
         $attempts = array_filter($attempts, static fn (int $timestamp): bool => $timestamp > $now - 900);
-        if (count($attempts) >= 10) {
-            $error = 'Too many attempts. Please try again in a few minutes.';
+        $registrations = $_SESSION['register_attempts'] ?? [];
+        $registrations = array_filter($registrations, static fn (int $timestamp): bool => $timestamp > $now - 3600);
+        if (count($attempts) >= 10 || ($mode === 'register' && count($registrations) >= 5)) {
+            $error = 'Too many attempts. Please try again later.';
         } else {
             $name = trim((string) ($_POST['name'] ?? ''));
             $email = trim((string) ($_POST['email'] ?? ''));
@@ -43,6 +45,8 @@ if (in_array($path, ['/login', '/register'], true)) {
                     $db = database($config);
                     $auth = new AuthService($db, new AuditService(new AuditRepository($db)));
                     if ($mode === 'register') {
+                        $registrations[] = $now;
+                        $_SESSION['register_attempts'] = $registrations;
                         $auth->register($name, $email, $password);
                         header('Location: /login?registered=1', true, 303);
                         exit;
@@ -53,8 +57,9 @@ if (in_array($path, ['/login', '/register'], true)) {
                     if ($user === null) {
                         $error = 'The email or password is incorrect.';
                     } else {
-                        unset($_SESSION['login_attempts']);
+                        unset($_SESSION['login_attempts'], $_SESSION['register_attempts']);
                         session_regenerate_id(true);
+                        csrf_regenerate();
                         $_SESSION['user'] = $user;
                         header('Location: /dashboard', true, 303);
                         exit;

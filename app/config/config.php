@@ -71,6 +71,8 @@ return [
     'env' => env('APP_ENV', 'production'),
     'url' => rtrim(env('APP_URL', ''), '/'),
     'session_timeout' => max(300, (int) env('SESSION_TIMEOUT', '1800')),
+    'session_absolute' => max(0, (int) env('SESSION_ABSOLUTE', '28800')),
+    'trusted_proxies' => array_values(array_filter(array_map('trim', explode(',', env('TRUSTED_PROXIES', ''))))),
     'max_active_loans' => max(1, (int) env('MAX_ACTIVE_LOANS', '5')),
     'loan_days' => max(1, (int) env('LOAN_DAYS', '14')),
     'fine' => [
