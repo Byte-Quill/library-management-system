@@ -23,6 +23,9 @@ if ($config['env'] === 'production') {
     ini_set('log_errors', '1');
 }
 
+// Deprecation notices must not become fatal errors when the host upgrades PHP.
+error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
+
 set_error_handler(static function (int $severity, string $message, string $file, int $line): bool {
     if (!(error_reporting() & $severity)) {
         return false;

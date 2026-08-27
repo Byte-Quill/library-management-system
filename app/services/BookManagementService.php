@@ -22,7 +22,7 @@ final class BookManagementService
         $cover = $this->uploads->store($files['cover'] ?? []);
         try {
             $this->books->create([
-                'category_id' => filter_var($input['category_id'] ?? null, FILTER_VALIDATE_INT) ?: null,
+                'category_id' => filter_var($input['category_id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) ?: null,
                 'title' => $title, 'isbn' => trim((string) ($input['isbn'] ?? '')) ?: null,
                 'publisher' => trim((string) ($input['publisher'] ?? '')) ?: null,
                 'publication_year' => $year,

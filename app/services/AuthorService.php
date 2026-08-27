@@ -18,8 +18,15 @@ final class AuthorService
         if ($name === '' || strlen($name) > 180) {
             throw new InvalidArgumentException('Author names must contain between 1 and 180 characters.');
         }
-        if (!$this->authors->create($name)) {
-            throw new RuntimeException('Unable to create author.');
+        try {
+            if (!$this->authors->create($name)) {
+                throw new RuntimeException('Unable to create author.');
+            }
+        } catch (PDOException $exception) {
+            if ($exception->getCode() === '23000') {
+                throw new InvalidArgumentException('That author already exists.');
+            }
+            throw $exception;
         }
     }
 

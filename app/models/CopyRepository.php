@@ -12,9 +12,11 @@ final class CopyRepository
         return $this->db->query('SELECT c.id, c.book_id, c.accession_number, c.condition_label, c.location, c.status, b.title FROM book_copies c INNER JOIN books b ON b.id = c.book_id ORDER BY b.title, c.accession_number')->fetchAll();
     }
 
-    public function availableForLoan(): array
+    public function availableForLoan(int $memberId): array
     {
-        return $this->db->query("SELECT c.id, c.accession_number, b.title FROM book_copies c INNER JOIN books b ON b.id = c.book_id WHERE c.status = 'available' AND b.status = 'active' ORDER BY b.title, c.accession_number")->fetchAll();
+        $statement = $this->db->prepare("SELECT c.id, c.accession_number, b.title FROM book_copies c INNER JOIN books b ON b.id = c.book_id WHERE b.status = 'active' AND (c.status = 'available' OR (c.status = 'reserved' AND EXISTS (SELECT 1 FROM reservations r WHERE r.book_id = c.book_id AND r.member_id = :member_id AND r.status = 'ready'))) ORDER BY b.title, c.accession_number");
+        $statement->execute(['member_id' => $memberId]);
+        return $statement->fetchAll();
     }
 
     public function create(array $copy): bool

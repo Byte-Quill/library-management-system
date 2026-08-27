@@ -28,14 +28,15 @@ PASSWORD="${DB_PASS:-}"
 if [ -n "${DB_URL:-}" ]; then
   echo "Using DB_URL from .env"
   eval "$(python3 - "$DB_URL" <<'PY'
+import shlex
 import sys
 from urllib.parse import urlparse
 u = urlparse(sys.argv[1])
-print(f"HOST={u.hostname or '127.0.0.1'}")
-print(f"PORT={u.port or 3306}")
-print(f"DATABASE={u.path.lstrip('/')}")
-print(f"USER={u.username or ''}")
-print(f"PASSWORD={u.password or ''}")
+print(f"HOST={shlex.quote(u.hostname or '127.0.0.1')}")
+print(f"PORT={shlex.quote(str(u.port or 3306))}")
+print(f"DATABASE={shlex.quote(u.path.lstrip('/'))}")
+print(f"USER={shlex.quote(u.username or '')}")
+print(f"PASSWORD={shlex.quote(u.password or '')}")
 PY
 )"
 fi

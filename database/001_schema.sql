@@ -101,13 +101,18 @@ CREATE TABLE IF NOT EXISTS reservations (
     book_id BIGINT UNSIGNED NOT NULL,
     member_id BIGINT UNSIGNED NOT NULL,
     status ENUM('pending', 'ready', 'fulfilled', 'cancelled', 'expired') NOT NULL DEFAULT 'pending',
+    -- Non-NULL only while a reservation is active, so the unique key below
+    -- allows any number of historical terminal rows but one active row per
+    -- (book, member). A plain unique key on status blocked re-cancelling,
+    -- re-expiring, or re-fulfilling a reservation for the same title.
+    active_flag TINYINT UNSIGNED AS (CASE WHEN status IN ('pending', 'ready') THEN 1 ELSE NULL END) VIRTUAL,
     expires_at DATETIME NULL,
     fulfilled_at DATETIME NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT fk_reservations_book FOREIGN KEY (book_id) REFERENCES books(id),
     CONSTRAINT fk_reservations_member FOREIGN KEY (member_id) REFERENCES users(id),
-    UNIQUE KEY uq_reservation_member_book (book_id, member_id, status),
+    UNIQUE KEY uq_reservation_member_book (book_id, member_id, active_flag),
     INDEX idx_reservations_queue (book_id, status, created_at)
 ) ENGINE=InnoDB;
 

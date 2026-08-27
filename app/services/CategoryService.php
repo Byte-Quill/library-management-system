@@ -18,8 +18,15 @@ final class CategoryService
         if ($name === '' || strlen($name) > 120) {
             throw new InvalidArgumentException('Category names must contain between 1 and 120 characters.');
         }
-        if (!$this->categories->create($name)) {
-            throw new RuntimeException('Unable to create category.');
+        try {
+            if (!$this->categories->create($name)) {
+                throw new RuntimeException('Unable to create category.');
+            }
+        } catch (PDOException $exception) {
+            if ($exception->getCode() === '23000') {
+                throw new InvalidArgumentException('That category already exists.');
+            }
+            throw $exception;
         }
     }
 

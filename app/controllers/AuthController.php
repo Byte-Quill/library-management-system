@@ -87,6 +87,9 @@ final class AuthController
             unset($_SESSION['login_attempts'], $_SESSION['register_attempts']);
             session_regenerate_id(true);
             csrf_regenerate();
+            // Restart the absolute lifetime: a fresh login is a fresh
+            // authentication, even if the anonymous session is older.
+            $_SESSION['created_at'] = time();
             $_SESSION['user'] = $user;
             header('Location: /dashboard', true, 303);
             exit;

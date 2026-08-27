@@ -8,7 +8,13 @@ final class LoanService
     }
 
     public function activeForMember(int $memberId): array { return $this->loans->activeForMember($memberId); }
-    public function availableCopies(): array { return $this->copies?->availableForLoan() ?? []; }
+    public function availableCopies(int $memberId): array { return $this->copies?->availableForLoan($memberId) ?? []; }
+    public function refreshReservations(): void
+    {
+        if ($this->reservations !== null) {
+            try { $this->reservations->expireAndPromote(); } catch (Throwable $exception) { error_log($exception->__toString()); }
+        }
+    }
     public function issue(int $memberId, string $copyId): void
     {
         $id = filter_var($copyId, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
@@ -22,8 +28,6 @@ final class LoanService
         if ($id === false) throw new InvalidArgumentException('A valid loan is required.');
         $this->loans->returnLoan($id, $this->config['fine']);
         // A returned copy may satisfy a queued reservation.
-        if ($this->reservations !== null) {
-            try { $this->reservations->expireAndPromote(); } catch (Throwable $exception) { error_log($exception->__toString()); }
-        }
+        $this->refreshReservations();
     }
 }

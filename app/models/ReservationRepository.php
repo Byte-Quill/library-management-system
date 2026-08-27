@@ -35,7 +35,15 @@ final class ReservationRepository
             $duplicate->execute(['book_id' => $bookId, 'member_id' => $memberId]);
             if ((int) $duplicate->fetchColumn() > 0) throw new InvalidArgumentException('You already have an active reservation for this title.');
             $statement = $this->db->prepare("INSERT INTO reservations (book_id, member_id, status) SELECT id, :member_id, 'pending' FROM books WHERE id = :book_id AND status = 'active'");
-            $statement->execute(['book_id' => $bookId, 'member_id' => $memberId]);
+            try {
+                $statement->execute(['book_id' => $bookId, 'member_id' => $memberId]);
+            } catch (PDOException $exception) {
+                // Unique-constraint violation from a concurrent reservation.
+                if ($exception->getCode() === '23000') {
+                    throw new InvalidArgumentException('You already have an active reservation for this title.');
+                }
+                throw $exception;
+            }
             if ($statement->rowCount() !== 1) throw new InvalidArgumentException('The selected title is unavailable for reservation.');
             $this->db->commit();
         } catch (Throwable $exception) { $this->db->rollBack(); throw $exception; }
@@ -45,20 +53,26 @@ final class ReservationRepository
     {
         $this->db->beginTransaction();
         try {
-            $lookup = $this->db->prepare("SELECT book_id, status FROM reservations WHERE id = :id AND member_id = :member_id AND status IN ('pending', 'ready')");
+            $lookup = $this->db->prepare("SELECT book_id, status FROM reservations WHERE id = :id AND member_id = :member_id AND status IN ('pending', 'ready') FOR UPDATE");
             $lookup->execute(['id' => $reservationId, 'member_id' => $memberId]);
             $reservation = $lookup->fetch();
             if (!$reservation) {
                 $this->db->rollBack();
                 return false;
             }
+            // Drop an older cancelled row for this title+member so the unique
+            // key on (book_id, member_id, status) cannot collide.
+            $this->db->prepare("DELETE FROM reservations WHERE book_id = :book_id AND member_id = :member_id AND status = 'cancelled'")
+                ->execute(['book_id' => $reservation['book_id'], 'member_id' => $memberId]);
             $statement = $this->db->prepare("UPDATE reservations SET status = 'cancelled' WHERE id = :id AND member_id = :member_id AND status IN ('pending', 'ready')");
             $statement->execute(['id' => $reservationId, 'member_id' => $memberId]);
-            if ($reservation['status'] === 'ready') {
+            $cancelled = $statement->rowCount() === 1;
+            // Release the held copy only when this cancel actually applied.
+            if ($cancelled && $reservation['status'] === 'ready') {
                 $this->db->prepare("UPDATE book_copies SET status = 'available' WHERE book_id = :book_id AND status = 'reserved' ORDER BY id LIMIT 1")->execute(['book_id' => $reservation['book_id']]);
             }
             $this->db->commit();
-            return $statement->rowCount() === 1;
+            return $cancelled;
         } catch (Throwable $exception) { $this->db->rollBack(); throw $exception; }
     }
 
@@ -66,9 +80,14 @@ final class ReservationRepository
     {
         $this->db->beginTransaction();
         try {
-            // Expire ready reservations whose pickup window has passed and release the copies they hold.
-            $expired = $this->db->query("SELECT book_id, COUNT(*) AS total FROM reservations WHERE status = 'ready' AND expires_at IS NOT NULL AND expires_at < NOW() GROUP BY book_id")->fetchAll();
+            // Expire ready reservations whose pickup window has passed and
+            // release the copies they hold. FOR UPDATE keeps a concurrent run
+            // from expiring (and releasing) the same rows a second time.
+            $expired = $this->db->query("SELECT book_id, COUNT(*) AS total FROM reservations WHERE status = 'ready' AND expires_at IS NOT NULL AND expires_at < NOW() GROUP BY book_id FOR UPDATE")->fetchAll();
             if ($expired !== []) {
+                // Drop stale expired rows for these members so the unique key
+                // on (book_id, member_id, status) cannot collide.
+                $this->db->exec("DELETE stale FROM reservations stale INNER JOIN reservations expiring ON expiring.book_id = stale.book_id AND expiring.member_id = stale.member_id WHERE stale.status = 'expired' AND expiring.status = 'ready' AND expiring.expires_at IS NOT NULL AND expiring.expires_at < NOW()");
                 $this->db->exec("UPDATE reservations SET status = 'expired' WHERE status = 'ready' AND expires_at IS NOT NULL AND expires_at < NOW()");
                 $release = $this->db->prepare("UPDATE book_copies SET status = 'available' WHERE book_id = :book_id AND status = 'reserved' ORDER BY id LIMIT 1");
                 foreach ($expired as $row) {
@@ -78,27 +97,36 @@ final class ReservationRepository
                 }
             }
 
-            // Promote the oldest pending reservations for each book that has available copies,
-            // holding one copy per promoted reservation. Done row-by-row to avoid updating
-            // reservations from a subquery on reservations itself (MySQL error 1093).
+            // Promote the oldest pending reservations for each book that has
+            // available copies, holding one copy per promoted reservation.
+            // Copies are locked before reservation rows (same order as
+            // LoanRepository::issue, to avoid deadlocks) and the hold is
+            // undone by exact copy id if the promotion loses a race.
             $candidates = $this->db->query("SELECT DISTINCT book_id FROM reservations WHERE status = 'pending'")->fetchAll(PDO::FETCH_COLUMN);
             $promote = $this->db->prepare("UPDATE reservations SET status = 'ready', expires_at = DATE_ADD(NOW(), INTERVAL 3 DAY) WHERE id = :id AND status = 'pending'");
-            $hold = $this->db->prepare("UPDATE book_copies SET status = 'reserved' WHERE book_id = :book_id AND status = 'available' ORDER BY id LIMIT 1");
             $next = $this->db->prepare("SELECT id FROM reservations WHERE book_id = :book_id AND status = 'pending' ORDER BY created_at ASC, id ASC LIMIT 1");
-            $available = $this->db->prepare("SELECT COUNT(*) FROM book_copies WHERE book_id = :book_id AND status = 'available'");
+            $pickCopy = $this->db->prepare("SELECT id FROM book_copies WHERE book_id = :book_id AND status = 'available' ORDER BY id ASC LIMIT 1 FOR UPDATE");
+            $holdById = $this->db->prepare("UPDATE book_copies SET status = 'reserved' WHERE id = :id");
+            $releaseById = $this->db->prepare("UPDATE book_copies SET status = 'available' WHERE id = :id AND status = 'reserved'");
             foreach ($candidates as $bookId) {
                 while (true) {
-                    $available->execute(['book_id' => $bookId]);
-                    if ((int) $available->fetchColumn() < 1) {
-                        break;
-                    }
                     $next->execute(['book_id' => $bookId]);
                     $reservationId = $next->fetchColumn();
                     if ($reservationId === false) {
                         break;
                     }
-                    $promote->execute(['id' => $reservationId]);
-                    $hold->execute(['book_id' => $bookId]);
+                    $pickCopy->execute(['book_id' => $bookId]);
+                    $copyId = $pickCopy->fetchColumn();
+                    if ($copyId === false) {
+                        break; // No physical copy is free right now.
+                    }
+                    $holdById->execute(['id' => (int) $copyId]);
+                    $promote->execute(['id' => (int) $reservationId]);
+                    if ($promote->rowCount() !== 1) {
+                        // The reservation was handled concurrently; undo this hold.
+                        $releaseById->execute(['id' => (int) $copyId]);
+                        break;
+                    }
                 }
             }
 

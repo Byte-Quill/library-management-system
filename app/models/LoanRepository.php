@@ -21,7 +21,19 @@ final class LoanRepository
             $copy = $this->db->prepare("SELECT c.id, c.book_id, c.status FROM book_copies c INNER JOIN books b ON b.id = c.book_id WHERE c.id = :copy_id AND b.status = 'active' FOR UPDATE");
             $copy->execute(['copy_id' => $copyId]);
             $copyData = $copy->fetch();
-            if (!$copyData || $copyData['status'] !== 'available') {
+            if (!$copyData) {
+                throw new InvalidArgumentException('This copy is not available.');
+            }
+            if ($copyData['status'] === 'reserved') {
+                // A copy held for a ready reservation may only be borrowed by
+                // the member it is held for. Locks the reservation row so a
+                // concurrent expiry cannot release it mid-transaction.
+                $held = $this->db->prepare("SELECT COUNT(*) FROM reservations WHERE book_id = :book_id AND member_id = :member_id AND status = 'ready' FOR UPDATE");
+                $held->execute(['book_id' => $copyData['book_id'], 'member_id' => $memberId]);
+                if ((int) $held->fetchColumn() < 1) {
+                    throw new InvalidArgumentException('This copy is not available.');
+                }
+            } elseif ($copyData['status'] !== 'available') {
                 throw new InvalidArgumentException('This copy is not available.');
             }
             $active = $this->db->prepare('SELECT COUNT(*) FROM loans WHERE member_id = :member_id AND returned_at IS NULL');
@@ -42,8 +54,24 @@ final class LoanRepository
             $loan->bindValue(':loan_days', $loanDays, PDO::PARAM_INT);
             $loan->execute();
             $this->db->prepare("UPDATE book_copies SET status = 'borrowed' WHERE id = :copy_id")->execute(['copy_id' => $copyId]);
-            // A ready reservation for this title is satisfied by this loan.
-            $this->db->prepare("UPDATE reservations SET status = 'fulfilled', fulfilled_at = NOW() WHERE book_id = :book_id AND member_id = :member_id AND status = 'ready'")->execute(['book_id' => $copyData['book_id'], 'member_id' => $memberId]);
+            // Any active reservation for this title is satisfied by this loan.
+            // Drop an older fulfilled row first so the unique key on
+            // (book_id, member_id, status) cannot collide.
+            $this->db->prepare("DELETE FROM reservations WHERE book_id = :book_id AND member_id = :member_id AND status = 'fulfilled'")->execute(['book_id' => $copyData['book_id'], 'member_id' => $memberId]);
+            $this->db->prepare("UPDATE reservations SET status = 'fulfilled', fulfilled_at = NOW() WHERE book_id = :book_id AND member_id = :member_id AND status IN ('pending', 'ready')")->execute(['book_id' => $copyData['book_id'], 'member_id' => $memberId]);
+            // Release held copies that no longer match a ready reservation
+            // (the borrower may have taken a different copy than the hold).
+            $ready = $this->db->prepare("SELECT COUNT(*) FROM reservations WHERE book_id = :book_id AND status = 'ready' FOR UPDATE");
+            $ready->execute(['book_id' => $copyData['book_id']]);
+            $reserved = $this->db->prepare("SELECT COUNT(*) FROM book_copies WHERE book_id = :book_id AND status = 'reserved' FOR UPDATE");
+            $reserved->execute(['book_id' => $copyData['book_id']]);
+            $excess = (int) $reserved->fetchColumn() - (int) $ready->fetchColumn();
+            if ($excess > 0) {
+                $releaseHeld = $this->db->prepare("UPDATE book_copies SET status = 'available' WHERE book_id = :book_id AND status = 'reserved' ORDER BY id LIMIT 1");
+                for ($i = 0; $i < $excess; $i++) {
+                    $releaseHeld->execute(['book_id' => $copyData['book_id']]);
+                }
+            }
             $this->db->commit();
         } catch (Throwable $exception) { $this->db->rollBack(); throw $exception; }
     }
@@ -57,10 +85,12 @@ final class LoanRepository
     {
         $this->db->beginTransaction();
         try {
-            $statement = $this->db->prepare('SELECT l.copy_id, l.due_at, l.returned_at FROM loans l WHERE l.id = :id FOR UPDATE');
+            // Compute lateness on the database server: due_at was written
+            // with NOW(), so the app server clock must not decide the fine.
+            $statement = $this->db->prepare('SELECT l.copy_id, l.due_at, l.returned_at, GREATEST(0, CEIL(TIMESTAMPDIFF(SECOND, l.due_at, NOW()) / 86400)) AS late_days FROM loans l WHERE l.id = :id FOR UPDATE');
             $statement->execute(['id' => $loanId]); $loan = $statement->fetch();
             if (!$loan || $loan['returned_at'] !== null) throw new InvalidArgumentException('This loan has already been returned.');
-            $lateDays = max(0, (int) ceil((time() - strtotime($loan['due_at'])) / 86400) - $fine['grace_days']);
+            $lateDays = max(0, (int) $loan['late_days'] - $fine['grace_days']);
             $amount = min($fine['max_amount'], $lateDays * $fine['daily_rate']);
             $update = $this->db->prepare('UPDATE loans SET returned_at = NOW(), fine_amount = :fine WHERE id = :id AND returned_at IS NULL');
             $update->execute(['fine' => number_format($amount, 2, '.', ''), 'id' => $loanId]);
