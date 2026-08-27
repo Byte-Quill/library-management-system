@@ -65,8 +65,7 @@ textarea {
   gap: 1rem;
   padding: 1rem clamp(1rem, 3vw, 3rem);
   border-bottom: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(12px);
+  background: var(--panel);
 }
 
 .brand {
@@ -86,11 +85,10 @@ textarea {
   width: 2.25rem;
   height: 2.25rem;
   border-radius: 0.8rem;
-  background: linear-gradient(135deg, var(--accent), var(--accent-red));
+  background: var(--accent);
   color: white;
   font-size: 0.8rem;
   font-weight: 700;
-  box-shadow: var(--shadow);
 }
 
 .site-header nav {
@@ -109,7 +107,6 @@ textarea {
 .site-header nav a {
   color: var(--muted);
   text-decoration: none;
-  transition: color 0.2s ease;
 }
 
 .site-header nav a:hover {
@@ -128,7 +125,7 @@ textarea {
 }
 
 .site-header nav .nav-button {
-  background: linear-gradient(135deg, var(--accent), var(--accent-red));
+  background: var(--accent);
   border-color: transparent;
   color: white;
 }
@@ -219,7 +216,7 @@ p {
   justify-content: center;
   gap: 1rem;
   padding: 1.5rem;
-  background: linear-gradient(150deg, #1e3a8a 0%, #1d4ed8 55%, #b91c1c 125%);
+  background: var(--accent-strong);
   color: #eef2ff;
 }
 
@@ -308,7 +305,6 @@ p {
   background: var(--surface);
   color: var(--text);
   padding: 0.8rem 0.9rem;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .catalog-filters input:focus,
@@ -333,19 +329,17 @@ p {
   padding: 0.75rem 1.2rem;
   border: 0;
   border-radius: 12px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-red));
+  background: var(--accent);
   color: white;
   font-weight: 700;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .catalog-filters button:hover,
 .book-form button:hover,
 .auth-form button:hover,
 .site-header nav button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 12px 22px rgba(30, 58, 138, 0.2);
+  background: var(--accent-strong);
 }
 
 .section-heading {
@@ -391,7 +385,7 @@ p {
   justify-content: center;
   min-height: 120px;
   border-radius: 14px;
-  background: linear-gradient(135deg, #1e3a8a, #2563eb 52%, #dc2626 130%);
+  background: var(--accent-strong);
   color: white;
   font-size: 2rem;
   font-weight: 700;
