@@ -16,9 +16,33 @@ final class LoanRepository
 
     public function issue(int $memberId, int $copyId, int $maxActiveLoans, int $loanDays): void
     {
-        $this->db->beginTransaction();
-        try {
-            $copy = $this->db->prepare("SELECT c.id, c.book_id, c.status FROM book_copies c INNER JOIN books b ON b.id = c.book_id WHERE c.id = :copy_id AND b.status = 'active' FOR UPDATE");
+        // Retry once on InnoDB deadlock: this transaction locks copies then
+        // reservations, while expireAndPromote() can lock them in the
+        // opposite order. A deadlock is a clean rollback, so replaying the
+        // whole check-then-insert is safe.
+        for ($attempt = 0; $attempt < 2; $attempt++) {
+            $this->db->beginTransaction();
+            try {
+                $this->issueWithinTransaction($memberId, $copyId, $maxActiveLoans, $loanDays);
+                $this->db->commit();
+                return;
+            } catch (Throwable $exception) {
+                if ($this->db->inTransaction()) {
+                    $this->db->rollBack();
+                }
+                $deadlock = $exception instanceof PDOException
+                    && ($exception->getCode() === '40001' || str_contains($exception->getMessage(), 'Deadlock found'));
+                if ($deadlock && $attempt === 0) {
+                    continue;
+                }
+                throw $exception;
+            }
+        }
+    }
+
+    private function issueWithinTransaction(int $memberId, int $copyId, int $maxActiveLoans, int $loanDays): void
+    {
+        $copy = $this->db->prepare("SELECT c.id, c.book_id, c.status FROM book_copies c INNER JOIN books b ON b.id = c.book_id WHERE c.id = :copy_id AND b.status = 'active' FOR UPDATE");
             $copy->execute(['copy_id' => $copyId]);
             $copyData = $copy->fetch();
             if (!$copyData) {
@@ -72,8 +96,6 @@ final class LoanRepository
                     $releaseHeld->execute(['book_id' => $copyData['book_id']]);
                 }
             }
-            $this->db->commit();
-        } catch (Throwable $exception) { $this->db->rollBack(); throw $exception; }
     }
 
     public function activeForReturn(): array

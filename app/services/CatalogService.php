@@ -12,9 +12,9 @@ final class CatalogService
         $page = max(1, min(10000, (int) ($input['page'] ?? 1)));
         $perPage = 12;
         $filters = [
-            'query' => trim((string) ($input['q'] ?? '')),
+            'query' => trim(str_param($input['q'] ?? '')),
             'category_id' => filter_var($input['category_id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]) ?: null,
-            'language' => trim((string) ($input['language'] ?? '')),
+            'language' => trim(str_param($input['language'] ?? '')),
             'publication_year' => filter_var($input['publication_year'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 9999]]) ?: null,
             'availability' => in_array($input['availability'] ?? '', ['available', 'unavailable'], true) ? $input['availability'] : '',
         ];

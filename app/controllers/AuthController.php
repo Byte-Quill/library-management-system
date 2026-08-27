@@ -60,9 +60,9 @@ final class AuthController
             return 'Too many attempts. Please try again later.';
         }
 
-        $name = trim((string) ($_POST['name'] ?? ''));
-        $email = trim((string) ($_POST['email'] ?? ''));
-        $password = (string) ($_POST['password'] ?? '');
+        $name = trim(str_param($_POST['name'] ?? ''));
+        $email = trim(str_param($_POST['email'] ?? ''));
+        $password = str_param($_POST['password'] ?? '');
 
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)
             || ($mode === 'register' && ($name === '' || strlen($name) > 120))

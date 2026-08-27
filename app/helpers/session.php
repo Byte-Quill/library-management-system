@@ -49,6 +49,16 @@ function csrf_token(): string
     return $_SESSION['csrf_token'];
 }
 
+/**
+ * Read a request parameter as a string. PHP lets clients send any field as an
+ * array (e.g. ?q[]=x); casting an array to string raises a warning that the
+ * application error handler turns into a fatal error, so coerce safely.
+ */
+function str_param(mixed $value, string $default = ''): string
+{
+    return is_scalar($value) ? (string) $value : $default;
+}
+
 function csrf_regenerate(): string
 {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -70,9 +80,9 @@ function is_https(array $config = []): bool
     return false;
 }
 
-function verify_csrf(?string $token): void
+function verify_csrf(mixed $token): void
 {
-    if (!$token || empty($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $token)) {
+    if (!is_string($token) || $token === '' || empty($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $token)) {
         error_log('CSRF validation failed for ' . ($_SERVER['REQUEST_METHOD'] ?? '?') . ' ' . ($_SERVER['REQUEST_URI'] ?? '?'));
         http_response_code(419);
         header('Content-Type: text/html; charset=utf-8');

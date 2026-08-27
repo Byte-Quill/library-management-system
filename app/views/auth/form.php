@@ -14,10 +14,10 @@ require dirname(__DIR__) . '/partials/layout-top.php';
         <input type="hidden" name="csrf_token" value="<?= e(csrf_token()) ?>">
         <?php if (!$isLogin): ?>
             <label for="name">Name</label>
-            <input id="name" name="name" required maxlength="120" autocomplete="name" value="<?= e($_POST['name'] ?? '') ?>">
+            <input id="name" name="name" required maxlength="120" autocomplete="name" value="<?= e(str_param($_POST['name'] ?? '')) ?>">
         <?php endif; ?>
         <label for="email">Email</label>
-        <input id="email" name="email" type="email" required maxlength="190" autocomplete="email" value="<?= e($_POST['email'] ?? '') ?>">
+        <input id="email" name="email" type="email" required maxlength="190" autocomplete="email" value="<?= e(str_param($_POST['email'] ?? '')) ?>">
         <label for="password">Password</label>
         <input id="password" name="password" type="password" required minlength="8" maxlength="4096" autocomplete="<?= $isLogin ? 'current-password' : 'new-password' ?>">
         <button type="submit"><?= e($isLogin ? 'Log in' : 'Register') ?></button>
